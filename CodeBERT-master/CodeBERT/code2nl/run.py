@@ -59,6 +59,7 @@ class Example(object):
 
 def read_examples(filename):
     """Read examples from filename."""
+    num = sum(1 for line in open(filename))
     examples=[]
     with open(filename,encoding="utf-8") as f:
         for idx, line in enumerate(f):
@@ -75,7 +76,7 @@ def read_examples(filename):
                         idx = idx,
                         source=code,
                         target = nl,
-                        ) 
+                        )
             )
     return examples
 
