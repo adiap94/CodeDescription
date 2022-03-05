@@ -199,7 +199,8 @@ def main():
                         help="Set this flag if you are using an uncased model.")
     parser.add_argument("--no_cuda", action='store_true',
                         help="Avoid using CUDA when available") 
-    
+    parser.add_argument("--test_while_training", action='store_true',
+                        help="Whether to run test while training, whenever model is approved.")
     parser.add_argument("--train_batch_size", default=8, type=int,
                         help="Batch size per GPU/CPU for training.")
     parser.add_argument("--eval_batch_size", default=8, type=int,
@@ -284,6 +285,7 @@ def main():
 
 
     if args.do_train:
+        args.output_dir = os.path.join(args.output_dir,time_str)
         # Prepare training data loader
         train_examples = read_examples(args.train_filename)
         train_features = convert_examples_to_features(train_examples, tokenizer,args,stage='train')
@@ -397,7 +399,7 @@ def main():
                 logger.info("  "+"*"*20)   
                 
                 #save last checkpoint
-                last_output_dir = os.path.join(args.output_dir,time_str, 'checkpoint-last')
+                last_output_dir = os.path.join(args.output_dir, 'checkpoint-last')
                 if not os.path.exists(last_output_dir):
                     os.makedirs(last_output_dir)
                 model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
@@ -408,7 +410,7 @@ def main():
                     logger.info("  "+"*"*20)
                     best_loss=eval_loss
                     # Save best checkpoint for best ppl
-                    output_dir = os.path.join(args.output_dir,time_str, 'checkpoint-best-ppl')
+                    output_dir = os.path.join(args.output_dir, 'checkpoint-best-ppl')
                     if not os.path.exists(output_dir):
                         os.makedirs(output_dir)
                     model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
@@ -464,68 +466,73 @@ def main():
                     logger.info("  "+"*"*20)
                     best_bleu=dev_bleu
                     # Save best checkpoint for best bleu
-                    output_dir = os.path.join(args.output_dir, time_str,'checkpoint-best-bleu')
+                    output_dir = os.path.join(args.output_dir, 'checkpoint-best-bleu')
                     if not os.path.exists(output_dir):
                         os.makedirs(output_dir)
                     model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
                     output_model_file = os.path.join(output_dir, "pytorch_model.bin")
                     torch.save(model_to_save.state_dict(), output_model_file)
-               
+                    args.load_model_path = output_model_file
+                    # run test
+                    if args.test_while_training and args.test_filename is not None:
+                        test(args, tokenizer, model, device)
     if args.do_test:
-        # make sure results are saved inside run folder
-        args.output_dir =os.path.dirname(os.path.dirname(args.load_model_path))
-
-        files=[]
-        if args.dev_filename is not None:
-            files.append(args.dev_filename)
-        if args.test_filename is not None:
-            files.append(args.test_filename)
-
-        for idx,file in enumerate(files):   
-            logger.info("Test file: {}".format(file))
-            eval_examples = read_examples(file)
-            eval_features = convert_examples_to_features(eval_examples, tokenizer, args,stage='test')
-            all_source_ids = torch.tensor([f.source_ids for f in eval_features], dtype=torch.long)
-            all_source_mask = torch.tensor([f.source_mask for f in eval_features], dtype=torch.long)    
-            eval_data = TensorDataset(all_source_ids,all_source_mask)   
-
-            # Calculate bleu
-            eval_sampler = SequentialSampler(eval_data)
-            eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=args.eval_batch_size)
-
-            model.eval() 
-            p=[]
-            for batch in tqdm(eval_dataloader,total=len(eval_dataloader)):
-                batch = tuple(t.to(device) for t in batch)
-                source_ids,source_mask= batch                  
-                with torch.no_grad():
-                    preds = model(source_ids=source_ids,source_mask=source_mask)  
-                    for pred in preds:
-                        t=pred[0].cpu().numpy()
-                        t=list(t)
-                        if 0 in t:
-                            t=t[:t.index(0)]
-                        text = tokenizer.decode(t,clean_up_tokenization_spaces=False)
-                        p.append(text)
-            model.train()
-            predictions=[]
-            with open(os.path.join(args.output_dir,"test_{}.output".format(str(idx))),'w') as f, open(os.path.join(args.output_dir,"test_{}.gold".format(str(idx))),'w') as f1:
-                for ref,gold in zip(p,eval_examples):
-                    predictions.append(str(gold.idx)+'\t'+ref)
-                    f.write(str(gold.idx)+'\t'+ref+'\n')
-                    f1.write(str(gold.idx)+'\t'+gold.target+'\n')     
-
-            (goldMap, predictionMap) = bleu.computeMaps(predictions, os.path.join(args.output_dir, "test_{}.gold".format(idx))) 
-            dev_bleu=round(bleu.bleuFromMaps(goldMap, predictionMap)[0],2)
-            logger.info("  %s = %s "%("bleu-4",str(dev_bleu)))
-            logger.info("  "+"*"*20)    
+        test(args, tokenizer, model, device)
 
 
+def test(args,tokenizer,model,device):
+    # make sure results are saved inside run folder
+    args.output_dir = os.path.dirname(os.path.dirname(args.load_model_path))
 
-                            
+    files = []
+    if args.dev_filename is not None:
+        files.append(args.dev_filename)
+    if args.test_filename is not None:
+        files.append(args.test_filename)
 
-                
-                
+    for idx, file in enumerate(files):
+        logger.info("Test file: {}".format(file))
+        eval_examples = read_examples(file)
+        eval_features = convert_examples_to_features(eval_examples, tokenizer, args, stage='test')
+        all_source_ids = torch.tensor([f.source_ids for f in eval_features], dtype=torch.long)
+        all_source_mask = torch.tensor([f.source_mask for f in eval_features], dtype=torch.long)
+        eval_data = TensorDataset(all_source_ids, all_source_mask)
+
+        # Calculate bleu
+        eval_sampler = SequentialSampler(eval_data)
+        eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=args.eval_batch_size)
+
+        model.eval()
+        p = []
+        for batch in tqdm(eval_dataloader, total=len(eval_dataloader)):
+            batch = tuple(t.to(device) for t in batch)
+            source_ids, source_mask = batch
+            with torch.no_grad():
+                preds = model(source_ids=source_ids, source_mask=source_mask)
+                for pred in preds:
+                    t = pred[0].cpu().numpy()
+                    t = list(t)
+                    if 0 in t:
+                        t = t[:t.index(0)]
+                    text = tokenizer.decode(t, clean_up_tokenization_spaces=False)
+                    p.append(text)
+        model.train()
+        predictions = []
+        with open(os.path.join(args.output_dir, "test_{}.output".format(str(idx))), 'w') as f, open(
+                os.path.join(args.output_dir, "test_{}.gold".format(str(idx))), 'w') as f1:
+            for ref, gold in zip(p, eval_examples):
+                predictions.append(str(gold.idx) + '\t' + ref)
+                f.write(str(gold.idx) + '\t' + ref + '\n')
+                f1.write(str(gold.idx) + '\t' + gold.target + '\n')
+
+        (goldMap, predictionMap) = bleu.computeMaps(predictions,
+                                                    os.path.join(args.output_dir, "test_{}.gold".format(idx)))
+        dev_bleu = round(bleu.bleuFromMaps(goldMap, predictionMap)[0], 2)
+        logger.info("  %s = %s " % ("bleu-4", str(dev_bleu)))
+        logger.info("  " + "*" * 20)
+
+
+
 if __name__ == "__main__":
     main()
 
