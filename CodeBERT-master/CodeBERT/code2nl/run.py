@@ -32,6 +32,7 @@ import logging
 import argparse
 import numpy as np
 from io import open
+import pandas as pd
 from itertools import cycle
 import torch.nn as nn
 from model import Seq2Seq
@@ -285,7 +286,10 @@ def main():
 
 
     if args.do_train:
+
         args.output_dir = os.path.join(args.output_dir,time_str)
+        csvLoggerFile_path = os.path.join(args.output_dir, "history.csv")
+
         # Prepare training data loader
         train_examples = read_examples(args.train_filename)
         train_features = convert_examples_to_features(train_examples, tokenizer,args,stage='train')
@@ -329,6 +333,8 @@ def main():
         train_dataloader=cycle(train_dataloader)
         eval_flag = True
         for step in bar:
+            epoch_log = {}
+            epoch_log["epoch"] = nb_tr_steps
             batch = next(train_dataloader)
             batch = tuple(t.to(device) for t in batch)
             source_ids,source_mask,target_ids,target_mask = batch
@@ -341,6 +347,7 @@ def main():
             tr_loss += loss.item()
             train_loss=round(tr_loss*args.gradient_accumulation_steps/(nb_tr_steps+1),4)
             bar.set_description("loss {}".format(train_loss))
+            epoch_log["train_loss"] = train_loss
             nb_tr_examples += source_ids.size(0)
             nb_tr_steps += 1
             loss.backward()
@@ -394,6 +401,7 @@ def main():
                 result = {'eval_ppl': round(np.exp(eval_loss),5),
                           'global_step': global_step+1,
                           'train_loss': round(train_loss,5)}
+                epoch_log["eval_ppl"] = result["eval_ppl"]
                 for key in sorted(result.keys()):
                     logger.info("  %s = %s", key, str(result[key]))
                 logger.info("  "+"*"*20)   
@@ -459,6 +467,7 @@ def main():
 
                 (goldMap, predictionMap) = bleu.computeMaps(predictions, os.path.join(args.output_dir, "dev.gold")) 
                 dev_bleu=round(bleu.bleuFromMaps(goldMap, predictionMap)[0],2)
+                epoch_log["dev_bleu"] = dev_bleu
                 logger.info("  %s = %s "%("bleu-4",str(dev_bleu)))
                 logger.info("  "+"*"*20)    
                 if dev_bleu>best_bleu:
@@ -476,6 +485,9 @@ def main():
                     # run test
                     if args.test_while_training and args.test_filename is not None:
                         test(args, tokenizer, model, device)
+
+            # write to logger
+            writeCSVLoggerFile(csvLoggerFile_path, epoch_log)
     if args.do_test:
         test(args, tokenizer, model, device)
 
@@ -532,7 +544,10 @@ def test(args,tokenizer,model,device):
         logger.info("  " + "*" * 20)
 
 
-
+def writeCSVLoggerFile(csvLoggerFile_path,epoch_log):
+    df = pd.DataFrame([epoch_log])
+    with open(csvLoggerFile_path, 'a') as f:
+        df.to_csv(f, mode='a', header=f.tell() == 0, index=False)
 if __name__ == "__main__":
     main()
 
