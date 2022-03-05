@@ -472,11 +472,15 @@ def main():
                     torch.save(model_to_save.state_dict(), output_model_file)
                
     if args.do_test:
+        # make sure results are saved inside run folder
+        args.output_dir =os.path.dirname(os.path.dirname(args.load_model_path))
+
         files=[]
         if args.dev_filename is not None:
             files.append(args.dev_filename)
         if args.test_filename is not None:
             files.append(args.test_filename)
+
         for idx,file in enumerate(files):   
             logger.info("Test file: {}".format(file))
             eval_examples = read_examples(file)
