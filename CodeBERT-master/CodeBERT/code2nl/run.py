@@ -20,6 +20,7 @@ using a masked language modeling (MLM) loss.
 """
 
 from __future__ import absolute_import
+import time
 import os
 import sys
 import bleu
@@ -254,7 +255,7 @@ def main():
     config_class, model_class, tokenizer_class = MODEL_CLASSES[args.model_type]
     config = config_class.from_pretrained(args.config_name if args.config_name else args.model_name_or_path)
     tokenizer = tokenizer_class.from_pretrained(args.tokenizer_name if args.tokenizer_name else args.model_name_or_path,do_lower_case=args.do_lower_case)
-    
+    time_str = time.strftime("%Y%m%d-%H%M%S")
     #budild model
     encoder = model_class.from_pretrained(args.model_name_or_path,config=config)    
     decoder_layer = nn.TransformerDecoderLayer(d_model=config.hidden_size, nhead=config.num_attention_heads)
@@ -396,7 +397,7 @@ def main():
                 logger.info("  "+"*"*20)   
                 
                 #save last checkpoint
-                last_output_dir = os.path.join(args.output_dir, 'checkpoint-last')
+                last_output_dir = os.path.join(args.output_dir,time_str, 'checkpoint-last')
                 if not os.path.exists(last_output_dir):
                     os.makedirs(last_output_dir)
                 model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
@@ -407,7 +408,7 @@ def main():
                     logger.info("  "+"*"*20)
                     best_loss=eval_loss
                     # Save best checkpoint for best ppl
-                    output_dir = os.path.join(args.output_dir, 'checkpoint-best-ppl')
+                    output_dir = os.path.join(args.output_dir,time_str, 'checkpoint-best-ppl')
                     if not os.path.exists(output_dir):
                         os.makedirs(output_dir)
                     model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
@@ -463,7 +464,7 @@ def main():
                     logger.info("  "+"*"*20)
                     best_bleu=dev_bleu
                     # Save best checkpoint for best bleu
-                    output_dir = os.path.join(args.output_dir, 'checkpoint-best-bleu')
+                    output_dir = os.path.join(args.output_dir, time_str,'checkpoint-best-bleu')
                     if not os.path.exists(output_dir):
                         os.makedirs(output_dir)
                     model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
