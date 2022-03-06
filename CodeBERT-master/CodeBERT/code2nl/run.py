@@ -66,7 +66,7 @@ def read_examples(filename):
     with open(filename,encoding="utf-8") as f:
         for idx, line in enumerate(f):
             if DEBUG_MODE:
-                if idx==10:
+                if idx==20:
                     break
             line=line.strip()
             js=json.loads(line)
