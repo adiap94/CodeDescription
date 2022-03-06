@@ -47,7 +47,7 @@ logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(messa
                     datefmt = '%m/%d/%Y %H:%M:%S',
                     level = logging.INFO)
 logger = logging.getLogger(__name__)
-
+DEBUG_MODE = False
 class Example(object):
     """A single training/test example."""
     def __init__(self,
@@ -61,10 +61,13 @@ class Example(object):
 
 def read_examples(filename):
     """Read examples from filename."""
-    num = sum(1 for line in open(filename))
+    # num = sum(1 for line in open(filename))
     examples=[]
     with open(filename,encoding="utf-8") as f:
         for idx, line in enumerate(f):
+            if DEBUG_MODE:
+                if idx==10:
+                    break
             line=line.strip()
             js=json.loads(line)
             if 'idx' not in js:
@@ -199,7 +202,9 @@ def main():
     parser.add_argument("--do_lower_case", action='store_true',
                         help="Set this flag if you are using an uncased model.")
     parser.add_argument("--no_cuda", action='store_true',
-                        help="Avoid using CUDA when available") 
+                        help="Avoid using CUDA when available")
+    parser.add_argument("--debug_mode", action='store_true',
+                        help="debug_mode for fast sanity check pre full run")
     parser.add_argument("--test_while_training", action='store_true',
                         help="Whether to run test while training, whenever model is approved.")
     parser.add_argument("--train_batch_size", default=8, type=int,
@@ -235,6 +240,12 @@ def main():
     # print arguments
     args = parser.parse_args()
     logger.info(args)
+
+    #debug mode
+    if args.debug_mode:
+        global DEBUG_MODE
+        DEBUG_MODE = True
+
 
     # Setup CUDA, GPU & distributed training
     if args.local_rank == -1 or args.no_cuda:
@@ -286,8 +297,11 @@ def main():
 
 
     if args.do_train:
-
-        args.output_dir = os.path.join(args.output_dir,time_str)
+        if DEBUG_MODE:
+            args.output_dir = os.path.join(args.output_dir,"debug", time_str)
+        else:
+            args.output_dir = os.path.join(args.output_dir,time_str)
+        os.makedirs(args.output_dir,exist_ok=True)
         csvLoggerFile_path = os.path.join(args.output_dir, "history.csv")
 
         # Prepare training data loader
