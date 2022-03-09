@@ -5,6 +5,7 @@ import torch
 import json
 from torch.utils.data import Dataset
 import logging
+import numpy as np
 
 
 
@@ -128,7 +129,7 @@ class CodeDataset(Dataset):
         self.args = args
         self.tokenizer = tokenizer
         self.debugBool=args.debug_mode
-
+        self.token_delete_bool = True
         self.split=split
 
         self._load_entire_data()
@@ -145,10 +146,15 @@ class CodeDataset(Dataset):
         target_ids = self.all_target_ids[idx]
         target_mask = self.all_target_mask[idx]
 
+        if self.token_delete_bool and self.split=="train":
+            target_ids = self.delete_random_token(target_ids)
+            
         return {"source_ids":source_ids ,"source_mask": source_mask,"target_ids": target_ids ,"target_mask": target_mask}
 
-    def delete_random_token(self):
-        print("todo")
+    def delete_random_token(self,tokens_vec):
+        idx = random.choice(np.where(tokens_vec!=1)[0])
+        tokens_vec[idx]=1
+        return tokens_vec
 
     def _load_entire_data(self):
         if self.split=="train":
