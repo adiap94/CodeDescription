@@ -122,7 +122,7 @@ def convert_examples_to_features(examples, tokenizer, args, stage=None):
 
 
 class CodeDataset(Dataset):
-    
+
     def __init__(self,args,tokenizer,split):
 
         self.args = args
@@ -135,7 +135,7 @@ class CodeDataset(Dataset):
 
 
     def __len__(self):
-        return len(self.db)
+        return len(self.all_target_ids)
 
     def __getitem__(self, idx):
         print(idx)
@@ -145,7 +145,7 @@ class CodeDataset(Dataset):
         target_ids = self.all_target_ids[idx]
         target_mask = self.all_target_mask[idx]
 
-        return source_ids , source_mask, target_ids , target_mask
+        return {"source_ids":source_ids ,"source_mask": source_mask,"target_ids": target_ids ,"target_mask": target_mask}
 
     def delete_random_token(self):
         print("todo")
