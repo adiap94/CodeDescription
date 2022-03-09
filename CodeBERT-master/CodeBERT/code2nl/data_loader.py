@@ -122,15 +122,15 @@ def convert_examples_to_features(examples, tokenizer, args, stage=None):
 
 
 class CodeDataset(Dataset):
+    
     def __init__(self,args,tokenizer,split):
 
         self.args = args
         self.tokenizer = tokenizer
-        self.debugBool=self.config["run_mode"]["debug_mode"]
+        self.debugBool=args.debug_mode
 
         self.split=split
 
-        # init dataset (has to be in the end)
         self._load_entire_data()
 
 
@@ -140,12 +140,15 @@ class CodeDataset(Dataset):
     def __getitem__(self, idx):
         print(idx)
         #
-        data = self.data[idx]
-        label = self.label[idx]
+        source_ids = self.all_source_ids[idx]
+        source_mask = self.all_source_mask[idx]
+        target_ids = self.all_target_ids[idx]
+        target_mask = self.all_target_mask[idx]
 
-        return (data, label)
-        return data
+        return source_ids , source_mask, target_ids , target_mask
 
+    def delete_random_token(self):
+        print("todo")
 
     def _load_entire_data(self):
         if self.split=="train":
@@ -159,10 +162,10 @@ class CodeDataset(Dataset):
         # load data
         examples = read_examples(filename,debug_mode=self.debugBool)
         features = convert_examples_to_features(examples, self.tokenizer,self.args,stage=self.split)
-        all_source_ids = torch.tensor([f.source_ids for f in features], dtype=torch.long)
-        all_source_mask = torch.tensor([f.source_mask for f in features], dtype=torch.long)
-        all_target_ids = torch.tensor([f.target_ids for f in features], dtype=torch.long)
-        all_target_mask = torch.tensor([f.target_mask for f in features], dtype=torch.long)
+        self.all_source_ids = torch.tensor([f.source_ids for f in features], dtype=torch.long)
+        self.all_source_mask = torch.tensor([f.source_mask for f in features], dtype=torch.long)
+        self.all_target_ids = torch.tensor([f.target_ids for f in features], dtype=torch.long)
+        self.all_target_mask = torch.tensor([f.target_mask for f in features], dtype=torch.long)
 
 
 if __name__ == "__main__":
