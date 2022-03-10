@@ -200,6 +200,7 @@ def main():
             args.output_dir = os.path.join(args.output_dir,"debug", time_str)
         else:
             args.output_dir = os.path.join(args.output_dir,time_str)
+        print("out dir is: "+ args.output_dir)
         os.makedirs(args.output_dir,exist_ok=True)
         os.makedirs(os.path.join(args.output_dir,"Models"),exist_ok=True)
         # csvLoggerFile_path = os.path.join(args.output_dir, "history.csv")
@@ -211,7 +212,7 @@ def main():
         num_train_optimization_steps =  args.train_steps
 
         # Start training
-        logger.info("***** Running training *****")
+        logger.info("***** Info training *****")
         logger.info("  Num examples = %d", len(train_dataset))
         logger.info("  Batch size = %d", args.train_batch_size)
         logger.info("  Num epoch = %d", num_train_optimization_steps * args.train_batch_size // len(train_dataset))
@@ -219,7 +220,7 @@ def main():
         # create eval dataloader
         print("loading validation data")
         eval_dataset = CodeDataset(args=args,tokenizer=tokenizer,split = "dev")
-        eval_loader = DataLoader(train_dataset, batch_size=args.eval_batch_size, shuffle=False)
+        eval_loader = DataLoader(eval_dataset, batch_size=args.eval_batch_size, shuffle=False)
 
         logger.info("\n***** Info evaluation *****")
         logger.info("  Num examples = %d", len(eval_dataset))

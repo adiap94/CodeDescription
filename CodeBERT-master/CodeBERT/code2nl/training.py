@@ -49,7 +49,7 @@ class train_class():
             for batch_data in self.train_loader:
                 step += 1
 
-                print(step)
+                # print(step)
                 source_ids, source_mask,target_ids,target_mask = (
                     batch_data["source_ids"].to(self.device),
                     batch_data["source_mask"].to(self.device),
@@ -65,7 +65,7 @@ class train_class():
                 loss.backward()
                 self.optimizer.step()
                 self.scheduler.step()
-                print(loss.item())
+                # print(loss.item())
                 train_loss += loss.item() / len(self.train_loader)
 
                 print(

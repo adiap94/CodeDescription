@@ -139,7 +139,7 @@ class CodeDataset(Dataset):
         return len(self.all_target_ids)
 
     def __getitem__(self, idx):
-        print(idx)
+        # print(idx)
         #
         source_ids = self.all_source_ids[idx]
         source_mask = self.all_source_mask[idx]
@@ -148,7 +148,7 @@ class CodeDataset(Dataset):
 
         if self.token_delete_bool and self.split=="train":
             target_ids = self.delete_random_token(target_ids)
-            
+
         return {"source_ids":source_ids ,"source_mask": source_mask,"target_ids": target_ids ,"target_mask": target_mask}
 
     def delete_random_token(self,tokens_vec):
