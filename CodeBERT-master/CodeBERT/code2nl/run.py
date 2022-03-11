@@ -154,7 +154,7 @@ def main():
 
     # Setup CUDA, GPU & distributed training
     if args.define_gpu:
-        os.environ["CUDA_VISIBLE_DEVICES"] = args.define_gpu
+        os.environ["CUDA_VISIBLE_DEVICES"] = str(args.define_gpu)
 
     if args.local_rank == -1 or args.no_cuda:
         device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
