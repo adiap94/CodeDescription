@@ -147,7 +147,7 @@ class CodeDataset(Dataset):
         target_mask = self.all_target_mask[idx]
 
         if self.token_delete_bool and self.split=="train":
-            target_ids = self.delete_random_token(target_ids)
+            target_ids = self.delete_random_token(target_ids.clone())
 
         return {"source_ids":source_ids ,"source_mask": source_mask,"target_ids": target_ids ,"target_mask": target_mask}
 
