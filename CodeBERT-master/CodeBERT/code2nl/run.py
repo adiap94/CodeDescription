@@ -180,13 +180,14 @@ def main():
     encoder = model_class.from_pretrained(args.model_name_or_path,config=config)    
     decoder_layer = nn.TransformerDecoderLayer(d_model=config.hidden_size, nhead=config.num_attention_heads)
     decoder = nn.TransformerDecoder(decoder_layer, num_layers=6)
+
     model=Seq2Seq(encoder=encoder,decoder=decoder,config=config,
                   beam_size=args.beam_size,max_length=args.max_target_length,
                   sos_id=tokenizer.cls_token_id,eos_id=tokenizer.sep_token_id)
     if args.load_model_path is not None:
         logger.info("reload model from {}".format(args.load_model_path))
-        model.load_state_dict(torch.load(args.load_model_path))
-        
+        # model.load_state_dict(torch.load(args.load_model_path))
+        model = torch.load(args.load_model_path)
     model.to(device)
     if args.local_rank != -1:
         # Distributed training
@@ -401,9 +402,9 @@ def main():
     #
     #         # write to logger
     #         writeCSVLoggerFile(csvLoggerFile_path, epoch_log)
-    # if args.do_test:
-    #     test(args, tokenizer, model, device)
-    #
+    if args.do_test:
+        test(args, tokenizer, model, device)
+
 
 def test(args,tokenizer,model,device):
     # make sure results are saved inside run folder
@@ -418,8 +419,8 @@ def test(args,tokenizer,model,device):
     for idx, file in enumerate(files):
         logger.info("Test file: {}".format(file))
         # create eval dataloader
-        print("loading validation data")
-        eval_dataset = CodeDataset(args=args,tokenizer=tokenizer,split = "dev")
+        print("loading testing data")
+        eval_dataset = CodeDataset(args=args,tokenizer=tokenizer,split = "test")
         eval_loader = DataLoader(eval_dataset, shuffle=False)
 
         model.eval()
