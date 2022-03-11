@@ -65,14 +65,14 @@ class train_class():
                                    target_mask=target_mask)
 
 
-                loss.backward()
+                loss.mean().backward()
                 self.optimizer.step()
                 self.scheduler.step()
                 # print(loss.item())
-                train_loss += loss.item() / len(self.train_loader)
+                train_loss += loss.mean().item() / len(self.train_loader)
 
                 print(
-                    f"{step}/{len(self.train_loader) // self.train_loader.batch_size}, train_loss: {loss.item():.4f}")
+                    f"{step}/{len(self.train_loader) // self.train_loader.batch_size}, train_loss: {loss.mean().item():.4f}")
 
             print(f"epoch {epoch + 1} average loss: {train_loss:.4f}")
             self.epoch_log["train_loss"] = train_loss
@@ -98,7 +98,7 @@ class train_class():
                                             target_mask=target_mask_val)
 
 
-                    val_loss += val_loss_step.item() / len(self.val_loader)
+                    val_loss += val_loss_step.mean().item() / len(self.val_loader)
 
 
                 print(f"epoch {epoch + 1} average val loss: {val_loss:.4f}")
