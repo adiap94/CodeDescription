@@ -37,10 +37,11 @@ from itertools import cycle
 import torch.nn as nn
 from model import Seq2Seq
 from tqdm import tqdm, trange
-from data_loader import CodeDataset
+from data_loader import CodeDataset , read_examples
 from training import train_class
 from torch.utils.data import DataLoader, Dataset, SequentialSampler, RandomSampler,TensorDataset
 from torch.utils.data.distributed import DistributedSampler
+
 from transformers import (WEIGHTS_NAME, AdamW, get_linear_schedule_with_warmup,
                           RobertaConfig, RobertaModel, RobertaTokenizer)
 MODEL_CLASSES = {'roberta': (RobertaConfig, RobertaModel, RobertaTokenizer)}
@@ -132,6 +133,8 @@ def main():
                         help="")
     parser.add_argument("--train_steps", default=-1, type=int,
                         help="")
+    parser.add_argument("--define_gpu", default=0, type=int,
+                        help="")
     parser.add_argument("--warmup_steps", default=0, type=int,
                         help="Linear warmup over warmup_steps.")
     parser.add_argument("--local_rank", type=int, default=-1,
@@ -149,6 +152,9 @@ def main():
 
 
     # Setup CUDA, GPU & distributed training
+    if args.define_gpu:
+        os.environ["CUDA_VISIBLE_DEVICES"] = args.define_gpu
+
     if args.local_rank == -1 or args.no_cuda:
         device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
         args.n_gpu = torch.cuda.device_count()
@@ -404,38 +410,41 @@ def test(args,tokenizer,model,device):
     args.output_dir = os.path.dirname(os.path.dirname(args.load_model_path))
 
     files = []
-    if args.dev_filename is not None:
-        files.append(args.dev_filename)
+    # if args.dev_filename is not None:
+    #     files.append(args.dev_filename)
     if args.test_filename is not None:
         files.append(args.test_filename)
 
     for idx, file in enumerate(files):
         logger.info("Test file: {}".format(file))
-        eval_examples = read_examples(file)
-        eval_features = convert_examples_to_features(eval_examples, tokenizer, args, stage='test')
-        all_source_ids = torch.tensor([f.source_ids for f in eval_features], dtype=torch.long)
-        all_source_mask = torch.tensor([f.source_mask for f in eval_features], dtype=torch.long)
-        eval_data = TensorDataset(all_source_ids, all_source_mask)
-
-        # Calculate bleu
-        eval_sampler = SequentialSampler(eval_data)
-        eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=args.eval_batch_size)
+        # create eval dataloader
+        print("loading validation data")
+        eval_dataset = CodeDataset(args=args,tokenizer=tokenizer,split = "dev")
+        eval_loader = DataLoader(eval_dataset, shuffle=False)
 
         model.eval()
         p = []
-        for batch in tqdm(eval_dataloader, total=len(eval_dataloader)):
-            batch = tuple(t.to(device) for t in batch)
-            source_ids, source_mask = batch
-            with torch.no_grad():
-                preds = model(source_ids=source_ids, source_mask=source_mask)
-                for pred in preds:
-                    t = pred[0].cpu().numpy()
-                    t = list(t)
-                    if 0 in t:
-                        t = t[:t.index(0)]
-                    text = tokenizer.decode(t, clean_up_tokenization_spaces=False)
-                    p.append(text)
-        model.train()
+        for val_data in eval_loader:
+
+            source_ids_val, source_mask_val, target_ids_val, target_mask_val = (
+                val_data["source_ids"].to(device),
+                val_data["source_mask"].to(device),
+                val_data["target_ids"].to(device),
+                val_data["target_mask"].to(device),
+                )
+        model.eval()
+        p = []
+
+        with torch.no_grad():
+            preds = model(source_ids=source_ids_val, source_mask=source_mask_val)
+            for pred in preds:
+                t = pred[0].cpu().numpy()
+                t = list(t)
+                if 0 in t:
+                    t = t[:t.index(0)]
+                text = tokenizer.decode(t, clean_up_tokenization_spaces=False)
+                p.append(text)
+        eval_examples = read_examples(file, debug_mode=DEBUG_MODE)
         predictions = []
         with open(os.path.join(args.output_dir, "test_{}.output".format(str(idx))), 'w') as f, open(
                 os.path.join(args.output_dir, "test_{}.gold".format(str(idx))), 'w') as f1:

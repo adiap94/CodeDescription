@@ -27,6 +27,9 @@ class train_class():
             df.to_csv(f, mode='a', header=f.tell() == 0, index=False)
 
     def save_model_checkpoint(self):
+        PATH = os.path.join(self.out_dir, "Models", "last_model.pt")
+        torch.save(self.model, PATH)
+        print("saved last model")
 
         if self.epoch_log["val_loss"] < self.best_metric:
             self.best_metric = self.epoch_log["val_loss"]
