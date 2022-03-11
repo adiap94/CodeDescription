@@ -129,7 +129,7 @@ class CodeDataset(Dataset):
         self.args = args
         self.tokenizer = tokenizer
         self.debugBool=args.debug_mode
-        self.token_delete_bool = True
+        self.token_delete_bool = args.delete_token
         self.split=split
 
         self._load_entire_data()

@@ -104,6 +104,8 @@ def main():
                         help="Avoid using CUDA when available")
     parser.add_argument("--debug_mode", action='store_true',
                         help="debug_mode for fast sanity check pre full run")
+    parser.add_argument("--delete_token", action='store_true',
+                        help="delete_token in training")
     parser.add_argument("--test_while_training", action='store_true',
                         help="Whether to run test while training, whenever model is approved.")
     parser.add_argument("--train_batch_size", default=8, type=int,
