@@ -98,7 +98,7 @@ class train_class():
                     val_loss_step, _, _ = self.model(source_ids=source_ids_val, source_mask=source_mask_val, target_ids=target_ids_val,
                                             target_mask=target_mask_val)
 
-                    val_loss_step =  val_loss_step.mean()
+                    # val_loss_step =  val_loss_step.mean()
                     val_loss += val_loss_step.item() / len(self.val_loader)
 
 
