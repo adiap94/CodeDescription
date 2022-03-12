@@ -220,7 +220,7 @@ def main():
         # Prepare training data loader
         print("loading training data")
         train_dataset = CodeDataset(args=args,tokenizer=tokenizer,split = "train")
-        train_loader = DataLoader(train_dataset, batch_size=args.train_batch_size, shuffle=True)
+        train_loader = DataLoader(train_dataset, batch_size=args.train_batch_size, shuffle=True,num_workers=5)
         num_train_optimization_steps =  args.train_steps
 
         # Start training
