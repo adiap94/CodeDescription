@@ -233,7 +233,7 @@ def main():
         # create eval dataloader
         print("loading validation data")
         eval_dataset = CodeDataset(args=args,tokenizer=tokenizer,split = "dev")
-        eval_loader = DataLoader(eval_dataset, batch_size=args.eval_batch_size, shuffle=False)
+        eval_loader = DataLoader(eval_dataset, batch_size=args.eval_batch_size, shuffle=False,num_workers=5)
 
         logger.info("\n***** Info evaluation *****")
         logger.info("  Num examples = %d", len(eval_dataset))
@@ -251,7 +251,8 @@ def main():
                                                     num_training_steps=num_train_optimization_steps)
 
         train_object=train_class(model=model, optimizer=optimizer, train_loader=train_loader, val_loader=eval_loader,
-         epoch_num=num_train_optimization_steps , out_dir=args.output_dir, device=device,scheduler=scheduler)
+         epoch_num=num_train_optimization_steps , out_dir=args.output_dir, device=device,scheduler=scheduler, tokenizer = tokenizer
+                                 ,path_to_dev = args.dev_filename)
         train_object.train()
 
     if args.do_test:
@@ -273,7 +274,7 @@ def test(args,tokenizer,model,device):
         # create eval dataloader
         print("loading testing data")
         eval_dataset = CodeDataset(args=args,tokenizer=tokenizer,split = "test")
-        eval_loader = DataLoader(eval_dataset, shuffle=False)
+        eval_loader = DataLoader(eval_dataset, shuffle=False,num_workers=5)
 
         model.eval()
         p = []
