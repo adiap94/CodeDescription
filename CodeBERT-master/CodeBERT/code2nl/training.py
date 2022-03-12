@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import logging
 from data_loader import read_examples
+import bleu
 from bleu import *
 
 logger = logging.getLogger(__name__)
@@ -61,7 +62,7 @@ class train_class():
         else:
             PATH = os.path.join(self.out_dir, "Models", "Best_Bule_model.pt")
             torch.save(self.model, PATH)
-            print("saved last model")
+            print("saved new best BLUE score model")
             # if self.epoch_log["belu_loss"] < self.best_belu_metric:
             #     self.best_metric = self.epoch_log["belu_loss"]
             #     PATH = os.path.join(self.out_dir, "Models", "best_belu_metric_model.pt")
@@ -74,6 +75,7 @@ class train_class():
         p = []
         with torch.no_grad():
             for val_data in self.val_loader:
+
                 source_ids_val, source_mask_val = (
                     val_data["source_ids"].to(self.device),
                     val_data["source_mask"].to(self.device),
@@ -96,9 +98,9 @@ class train_class():
                     predictions.append(str(gold.idx) + '\t' + ref)
                     f.write(str(gold.idx) + '\t' + ref + '\n')
                     f1.write(str(gold.idx) + '\t' + gold.target + '\n')
-            (goldMap, predictionMap) = bleu.computeMaps(predictions,
-                                                        os.path.join(self.out_dir, "test_.gold"))
-            dev_bleu = round(bleu.bleuFromMaps(goldMap, predictionMap)[0], 2)
+            (goldMap, predictionMap) = computeMaps(predictions,
+                                                        os.path.join(self.out_dir, "dev.gold"))
+            dev_bleu = round(bleuFromMaps(goldMap, predictionMap)[0], 2)
             logger.info("  %s = %s " % ("bleu-4", str(dev_bleu)))
             logger.info("  " + "*" * 20)
             if dev_bleu > self.best_belu_metric:
@@ -107,12 +109,13 @@ class train_class():
                 self.best_belu_metric = dev_bleu
             self.belu_log["dev_bleu"] = dev_bleu
             self.belu_log["step"] = self.step
-            self.save_model_checkpoint(self,True)
+            self.save_model_checkpoint(True)
+            self.writeCSVLoggerFile(True)
 
     def train(self):
 
         for epoch in range(self.epoch_num):
-            self.epoch_log = {}
+            #self.epoch_log = {}
             self.epoch_log["epoch"] = epoch
             print(f"epoch {epoch}/{self.epoch_num}")
 
@@ -148,7 +151,7 @@ class train_class():
                     f"{step}/{len(self.train_loader) // self.train_loader.batch_size}, train_loss: {loss.item():.4f}")
 
 
-                if self.step%2 ==0:
+                if self.step%1000 ==0:
                     self.calc_Belu_score()
 
             print(f"epoch {epoch + 1} average loss: {train_loss:.4f}")
@@ -162,6 +165,7 @@ class train_class():
                 val_loss = 0
                 tokens_num = 0
                 val_step = 0
+                eval_loss = 0
 
                 for val_data in self.val_loader:
                     val_step += 1
@@ -178,22 +182,23 @@ class train_class():
                     # val_loss_step =  val_loss_step.mean()
                     val_loss += val_loss_step.sum().item()
                     tokens_num += num.sum().item()
-                eval_loss = eval_loss / tokens_num
+                eval_loss = val_loss / tokens_num
                 result = {'eval_ppl': round(np.exp(eval_loss),5),
                           'global_step': self.step+1,
                           'train_loss': round(train_loss,5)}
                 for key in sorted(result.keys()):
                     logger.info("  %s = %s", key, str(result[key]))
                 logger.info("  "+"*"*20)
-                print(f"epoch {self.epoch} /step {self.step + 1} average val loss: {val_loss:.4f}")
+                print(f"epoch {epoch+1} , average val loss: {eval_loss:.4f}")
 
-                self.epoch_log["val_loss"] = val_loss
-
+                self.epoch_log["val_loss"] = eval_loss
+                self.epoch_log["eval_ppl"] = round(np.exp(eval_loss),5)
+                self.calc_Belu_score()
             # update Logger File
             self.writeCSVLoggerFile()
 
             # save model checkpoint
             self.save_model_checkpoint()
 
-            self.calc_Belu_score()
+
 

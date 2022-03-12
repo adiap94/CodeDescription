@@ -221,7 +221,7 @@ def main():
         # Prepare training data loader
         print("loading training data")
         train_dataset = CodeDataset(args=args,tokenizer=tokenizer,split = "train")
-        train_loader = DataLoader(train_dataset, batch_size=args.train_batch_size, shuffle=True,num_workers=5)
+        train_loader = DataLoader(train_dataset, batch_size=args.train_batch_size, shuffle=True)
         num_train_optimization_steps =  args.train_steps
 
         # Start training
@@ -233,7 +233,7 @@ def main():
         # create eval dataloader
         print("loading validation data")
         eval_dataset = CodeDataset(args=args,tokenizer=tokenizer,split = "dev")
-        eval_loader = DataLoader(eval_dataset, batch_size=args.eval_batch_size, shuffle=False,num_workers=5)
+        eval_loader = DataLoader(eval_dataset, batch_size=args.eval_batch_size, shuffle=False)
 
         logger.info("\n***** Info evaluation *****")
         logger.info("  Num examples = %d", len(eval_dataset))
@@ -274,8 +274,7 @@ def test(args,tokenizer,model,device):
         # create eval dataloader
         print("loading testing data")
         eval_dataset = CodeDataset(args=args,tokenizer=tokenizer,split = "test")
-        eval_loader = DataLoader(eval_dataset, shuffle=False,num_workers=5)
-
+        eval_loader = DataLoader(eval_dataset, shuffle=False)
         model.eval()
         p = []
         for val_data in eval_loader:
