@@ -38,7 +38,7 @@ import torch.nn as nn
 from utiles import save_params
 from model import Seq2Seq
 from tqdm import tqdm, trange
-from data_loader import CodeDataset , read_examples
+from data_loader import CodeDataset , read_examples , worker_init_fn
 from training import train_class
 from torch.utils.data import DataLoader, Dataset, SequentialSampler, RandomSampler,TensorDataset
 from torch.utils.data.distributed import DistributedSampler
@@ -221,19 +221,19 @@ def main():
         # Prepare training data loader
         print("loading training data")
         train_dataset = CodeDataset(args=args,tokenizer=tokenizer,split = "train")
-        train_loader = DataLoader(train_dataset, batch_size=args.train_batch_size, shuffle=True)
+        train_loader = DataLoader(train_dataset, batch_size=args.train_batch_size, shuffle=True,num_workers=5,worker_init_fn=worker_init_fn)
         num_train_optimization_steps =  args.train_steps
 
         # Start training
         logger.info("***** Info training *****")
         logger.info("  Num examples = %d", len(train_dataset))
         logger.info("  Batch size = %d", args.train_batch_size)
-        logger.info("  Num epoch = %d", num_train_optimization_steps * args.train_batch_size // len(train_dataset))
+        logger.info("  Num epoch = %d", num_train_optimization_steps )
 
         # create eval dataloader
         print("loading validation data")
         eval_dataset = CodeDataset(args=args,tokenizer=tokenizer,split = "dev")
-        eval_loader = DataLoader(eval_dataset, batch_size=args.eval_batch_size, shuffle=False)
+        eval_loader = DataLoader(eval_dataset, batch_size=args.eval_batch_size, shuffle=False,worker_init_fn=worker_init_fn,num_workers=5)
 
         logger.info("\n***** Info evaluation *****")
         logger.info("  Num examples = %d", len(eval_dataset))
@@ -274,7 +274,7 @@ def test(args,tokenizer,model,device):
         # create eval dataloader
         print("loading testing data")
         eval_dataset = CodeDataset(args=args,tokenizer=tokenizer,split = "test")
-        eval_loader = DataLoader(eval_dataset, shuffle=False)
+        eval_loader = DataLoader(eval_dataset, shuffle=False,worker_init_fn=worker_init_fn,num_workers=5)
         model.eval()
         p = []
         for val_data in eval_loader:

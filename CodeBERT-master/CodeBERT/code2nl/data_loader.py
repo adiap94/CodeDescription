@@ -34,7 +34,7 @@ def read_examples(filename,debug_mode=False):
     with open(filename, encoding="utf-8") as f:
         for idx, line in enumerate(f):
             if debug_mode:
-                if idx == 20:
+                if idx == 2000:
                     break
             line = line.strip()
             js = json.loads(line)
@@ -131,7 +131,8 @@ class CodeDataset(Dataset):
         self.debugBool=args.debug_mode
         self.token_delete_bool = args.delete_token
         self.split=split
-
+        self.start = 0
+        self.end = 0
         self._load_entire_data()
 
 
@@ -167,11 +168,26 @@ class CodeDataset(Dataset):
             raise Exception("NEED TO SELECT DATA SET")
         # load data
         examples = read_examples(filename,debug_mode=self.debugBool)
+        self.end = len(examples)
         features = convert_examples_to_features(examples, self.tokenizer,self.args,stage=self.split)
         self.all_source_ids = torch.tensor([f.source_ids for f in features], dtype=torch.long)
         self.all_source_mask = torch.tensor([f.source_mask for f in features], dtype=torch.long)
         self.all_target_ids = torch.tensor([f.target_ids for f in features], dtype=torch.long)
         self.all_target_mask = torch.tensor([f.target_mask for f in features], dtype=torch.long)
+
+
+
+def worker_init_fn(worker_id):
+    worker_info = torch.utils.data.get_worker_info()
+    dataset = worker_info.dataset  # the dataset copy in this worker process
+    overall_start = dataset.start
+    overall_end = dataset.end
+    # configure the dataset to only process the split workload
+    per_worker = int(np.ceil((overall_end - overall_start) / float(worker_info.num_workers)))
+    worker_id = worker_info.id
+    dataset.start = overall_start + worker_id * per_worker
+    dataset.end = min(dataset.start + per_worker, overall_end)
+
 
 
 if __name__ == "__main__":
