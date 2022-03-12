@@ -134,7 +134,7 @@ def main():
                         help="")
     parser.add_argument("--train_steps", default=-1, type=int,
                         help="")
-    parser.add_argument("--define_gpu", default=0, type=int,
+    parser.add_argument("--define_gpu", default='0', type=str,
                         help="")
     parser.add_argument("--warmup_steps", default=0, type=int,
                         help="Linear warmup over warmup_steps.")
@@ -154,8 +154,9 @@ def main():
 
     # Setup CUDA, GPU & distributed training
     if args.define_gpu:
-        os.environ["CUDA_VISIBLE_DEVICES"] = str(args.define_gpu)
-
+        os.environ["CUDA_VISIBLE_DEVICES"] = args.define_gpu
+        # device = torch.device("cuda:0")
+        # args.n_gpu = 1
     if args.local_rank == -1 or args.no_cuda:
         device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
         args.n_gpu = torch.cuda.device_count()

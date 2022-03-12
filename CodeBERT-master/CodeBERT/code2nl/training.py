@@ -64,8 +64,9 @@ class train_class():
                 loss, _, _ = self.model(source_ids=source_ids, source_mask=source_mask, target_ids=target_ids,
                                    target_mask=target_mask)
 
-                loss = loss.mean()
-                loss.backward(retain_graph=True)
+                # loss = loss.mean()
+                # loss.backward(retain_graph=True)
+                loss.backward()
                 self.optimizer.step()
                 self.scheduler.step()
                 # print(loss.item())
