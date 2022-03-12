@@ -64,15 +64,15 @@ class train_class():
                 loss, _, _ = self.model(source_ids=source_ids, source_mask=source_mask, target_ids=target_ids,
                                    target_mask=target_mask)
 
-
-                loss.mean().backward()
+                loss = loss.mean()
+                loss.backward(retain_graph=True)
                 self.optimizer.step()
                 self.scheduler.step()
                 # print(loss.item())
-                train_loss += loss.mean().item() / len(self.train_loader)
+                train_loss += loss.item() / len(self.train_loader)
 
                 print(
-                    f"{step}/{len(self.train_loader) // self.train_loader.batch_size}, train_loss: {loss.mean().item():.4f}")
+                    f"{step}/{len(self.train_loader) // self.train_loader.batch_size}, train_loss: {loss.item():.4f}")
 
             print(f"epoch {epoch + 1} average loss: {train_loss:.4f}")
             self.epoch_log["train_loss"] = train_loss
@@ -97,8 +97,8 @@ class train_class():
                     val_loss_step, _, _ = self.model(source_ids=source_ids_val, source_mask=source_mask_val, target_ids=target_ids_val,
                                             target_mask=target_mask_val)
 
-
-                    val_loss += val_loss_step.mean().item() / len(self.val_loader)
+                    val_loss_step =  val_loss_step.mean()
+                    val_loss += val_loss_step.item() / len(self.val_loader)
 
 
                 print(f"epoch {epoch + 1} average val loss: {val_loss:.4f}")

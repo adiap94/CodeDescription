@@ -284,18 +284,18 @@ def test(args,tokenizer,model,device):
                 val_data["target_ids"].to(device),
                 val_data["target_mask"].to(device),
                 )
-        model.eval()
-        p = []
+            model.eval()
+            # p = []
 
-        with torch.no_grad():
-            preds = model(source_ids=source_ids_val, source_mask=source_mask_val)
-            for pred in preds:
-                t = pred[0].cpu().numpy()
-                t = list(t)
-                if 0 in t:
-                    t = t[:t.index(0)]
-                text = tokenizer.decode(t, clean_up_tokenization_spaces=False)
-                p.append(text)
+            with torch.no_grad():
+                preds = model(source_ids=source_ids_val, source_mask=source_mask_val)
+                for pred in preds:
+                    t = pred[0].cpu().numpy()
+                    t = list(t)
+                    if 0 in t:
+                        t = t[:t.index(0)]
+                    text = tokenizer.decode(t, clean_up_tokenization_spaces=False)
+                    p.append(text)
         eval_examples = read_examples(file, debug_mode=DEBUG_MODE)
         predictions = []
         with open(os.path.join(args.output_dir, "test_{}.output".format(str(idx))), 'w') as f, open(
