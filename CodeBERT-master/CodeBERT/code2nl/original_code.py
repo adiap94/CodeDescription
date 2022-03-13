@@ -64,13 +64,14 @@ class Example(object):
         self.target = target
 
 
-def read_examples(filename):
+def read_examples(filename, eval = False):
     """Read examples from filename."""
-    num = sum(1 for line in open(filename))
     examples = []
     with open(filename, encoding="utf-8") as f:
         for idx, line in enumerate(f):
-            if DEBUG_MODE and idx >200:
+            if DEBUG_MODE and eval==True and idx>20:
+                break
+            if DEBUG_MODE and idx >500:
                 break
             line = line.strip()
             js = json.loads(line)
@@ -87,6 +88,7 @@ def read_examples(filename):
                     target=nl,
                 )
             )
+    #f.close()
     return examples
 
 
@@ -285,14 +287,19 @@ def main():
     args.device = device
     # Set seed
     set_seed(args)
-    if os.path.exists(args.output_dir) is False:
-        os.makedirs(args.output_dir)
+
     training_log = {}
     bleu_log = {}
-    csvLoggerFile_path = os.path.join(args.output_dir, "history.csv")
-    csvLoggerFile_Blue_path = os.path.join(args.output_dir, "Bleuhistory.csv")
+    if args.do_train:
+        if DEBUG_MODE:
+            args.output_dir = os.path.join(args.output_dir,"debug", time_str)
+        else:
+            args.output_dir = os.path.join(args.output_dir,time_str)
     # make dir if output_dir not exist
     print("out dir is: " + args.output_dir)
+    if os.path.exists(args.output_dir) is False:
+        os.makedirs(args.output_dir)
+
     utiles.save_params(args=args, out_dir=args.output_dir)
 
 
@@ -327,11 +334,8 @@ def main():
         model = torch.nn.DataParallel(model)
 
     if args.do_train:
-        if DEBUG_MODE:
-            args.output_dir = os.path.join(args.output_dir,"debug", time_str)
-        else:
-            args.output_dir = os.path.join(args.output_dir,time_str)
-
+        csvLoggerFile_path = os.path.join(args.output_dir, "history.csv")
+        csvLoggerFile_Blue_path = os.path.join(args.output_dir, "Bleuhistory.csv")
         # Prepare training data loader
         train_examples = read_examples(args.train_filename)
         train_features = convert_examples_to_features(train_examples, tokenizer, args, stage='train')
@@ -408,7 +412,7 @@ def main():
                 if 'dev_loss' in dev_dataset:
                     eval_examples, eval_data = dev_dataset['dev_loss']
                 else:
-                    eval_examples = read_examples(args.dev_filename)
+                    eval_examples = read_examples(args.dev_filename,eval = True)
                     eval_features = convert_examples_to_features(eval_examples, tokenizer, args, stage='dev')
                     all_source_ids = torch.tensor([f.source_ids for f in eval_features], dtype=torch.long)
                     all_source_mask = torch.tensor([f.source_mask for f in eval_features], dtype=torch.long)
@@ -470,11 +474,13 @@ def main():
                     output_model_file = os.path.join(output_dir, "pytorch_model.bin")
                     torch.save(model_to_save.state_dict(), output_model_file)
 
+
                     # Calculate bleu
+                logger.info("\n***** Running Bleu evaluation *****")
                 if 'dev_bleu' in dev_dataset:
                     eval_examples, eval_data = dev_dataset['dev_bleu']
                 else:
-                    eval_examples = read_examples(args.dev_filename)
+                    eval_examples = read_examples(args.dev_filename,eval = True)
                     eval_examples = random.sample(eval_examples, min(1000, len(eval_examples)))
                     eval_features = convert_examples_to_features(eval_examples, tokenizer, args, stage='test')
                     all_source_ids = torch.tensor([f.source_ids for f in eval_features], dtype=torch.long)
