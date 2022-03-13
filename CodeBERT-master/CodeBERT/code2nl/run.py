@@ -21,6 +21,7 @@ using a masked language modeling (MLM) loss.
 
 from __future__ import absolute_import
 import os
+import time
 import sys
 import bleu
 import pickle
@@ -45,6 +46,7 @@ logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(messa
                     datefmt = '%m/%d/%Y %H:%M:%S',
                     level = logging.INFO)
 logger = logging.getLogger(__name__)
+DEBUG_MODE = False
 
 class Example(object):
     """A single training/test example."""
@@ -194,6 +196,8 @@ def main():
                         help="Whether to run eval on the dev set.")
     parser.add_argument("--do_test", action='store_true',
                         help="Whether to run eval on the dev set.")
+    parser.add_argument("--debug_mode", action='store_true',
+                        help="debug_mode for fast sanity check pre full run")
     parser.add_argument("--do_lower_case", action='store_true',
                         help="Set this flag if you are using an uncased model.")
     parser.add_argument("--no_cuda", action='store_true',
@@ -229,11 +233,22 @@ def main():
                         help="For distributed training: local_rank")   
     parser.add_argument('--seed', type=int, default=42,
                         help="random seed for initialization")
+    parser.add_argument("--define_gpu", default='0', type=str,
+                        help="")
+
     # print arguments
     args = parser.parse_args()
     logger.info(args)
 
+    #debug mode
+    if args.debug_mode:
+        global DEBUG_MODE
+        DEBUG_MODE = True
+
+
     # Setup CUDA, GPU & distributed training
+    if args.define_gpu:
+        os.environ["CUDA_VISIBLE_DEVICES"] = args.define_gpu
     if args.local_rank == -1 or args.no_cuda:
         device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
         args.n_gpu = torch.cuda.device_count()
@@ -254,7 +269,7 @@ def main():
     config_class, model_class, tokenizer_class = MODEL_CLASSES[args.model_type]
     config = config_class.from_pretrained(args.config_name if args.config_name else args.model_name_or_path)
     tokenizer = tokenizer_class.from_pretrained(args.tokenizer_name if args.tokenizer_name else args.model_name_or_path,do_lower_case=args.do_lower_case)
-    
+    time_str = time.strftime("%Y%m%d-%H%M%S")
     #budild model
     encoder = model_class.from_pretrained(args.model_name_or_path,config=config)    
     decoder_layer = nn.TransformerDecoderLayer(d_model=config.hidden_size, nhead=config.num_attention_heads)
@@ -283,6 +298,13 @@ def main():
 
 
     if args.do_train:
+        if DEBUG_MODE:
+            args.output_dir = os.path.join(args.output_dir,"debug", time_str)
+        else:
+            args.output_dir = os.path.join(args.output_dir,time_str)
+
+        print("out dir is: "+ args.output_dir)
+
         # Prepare training data loader
         train_examples = read_examples(args.train_filename)
         train_features = convert_examples_to_features(train_examples, tokenizer,args,stage='train')
