@@ -380,7 +380,10 @@ def main():
                 scheduler.step()
                 global_step += 1
                 eval_flag = True
-                
+
+            epoch_log['global_step'] = global_step
+            epoch_log['train_loss'] = train_loss
+
             if args.do_eval and (((global_step + 1) %args.eval_steps == 0) or global_step ==1) and eval_flag:
                 #Eval model with dev dataset
                 tr_loss = 0
@@ -422,8 +425,7 @@ def main():
                 result = {'eval_ppl': round(np.exp(eval_loss),5),
                           'global_step': global_step+1,
                           'train_loss': round(train_loss,5)}
-                epoch_log['global_step']=result['global_step']
-                epoch_log['train_loss']=result['train_loss']
+
                 epoch_log['eval_ppl']=result['eval_ppl']
 
                 for key in sorted(result.keys()):
