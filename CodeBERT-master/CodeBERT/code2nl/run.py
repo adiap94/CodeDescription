@@ -40,6 +40,7 @@ from torch.utils.data import DataLoader, Dataset, SequentialSampler, RandomSampl
 from torch.utils.data.distributed import DistributedSampler
 from transformers import (WEIGHTS_NAME, AdamW, get_linear_schedule_with_warmup,
                           RobertaConfig, RobertaModel, RobertaTokenizer)
+from utiles import save_params, writeCSVLoggerFile
 MODEL_CLASSES = {'roberta': (RobertaConfig, RobertaModel, RobertaTokenizer)}
 
 logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
@@ -65,6 +66,9 @@ def read_examples(filename):
     examples=[]
     with open(filename,encoding="utf-8") as f:
         for idx, line in enumerate(f):
+            if DEBUG_MODE:
+                if idx == 20:
+                    break
             line=line.strip()
             js=json.loads(line)
             if 'idx' not in js:
@@ -304,7 +308,10 @@ def main():
             args.output_dir = os.path.join(args.output_dir,time_str)
 
         print("out dir is: "+ args.output_dir)
-
+        os.makedirs(args.output_dir,exist_ok=True)
+        os.makedirs(os.path.join(args.output_dir,"Models"),exist_ok=True)
+        save_params(args=args, out_dir=args.output_dir)
+        csvLoggerFile_path = os.path.join(args.output_dir, "history.csv")
         # Prepare training data loader
         train_examples = read_examples(args.train_filename)
         train_features = convert_examples_to_features(train_examples, tokenizer,args,stage='train')
@@ -348,6 +355,7 @@ def main():
         train_dataloader=cycle(train_dataloader)
         eval_flag = True
         for step in bar:
+            epoch_log = {}
             batch = next(train_dataloader)
             batch = tuple(t.to(device) for t in batch)
             source_ids,source_mask,target_ids,target_mask = batch
@@ -359,6 +367,7 @@ def main():
                 loss = loss / args.gradient_accumulation_steps
             tr_loss += loss.item()
             train_loss=round(tr_loss*args.gradient_accumulation_steps/(nb_tr_steps+1),4)
+
             bar.set_description("loss {}".format(train_loss))
             nb_tr_examples += source_ids.size(0)
             nb_tr_steps += 1
@@ -372,7 +381,7 @@ def main():
                 global_step += 1
                 eval_flag = True
                 
-            if args.do_eval and ((global_step + 1) %args.eval_steps == 0) and eval_flag:
+            if args.do_eval and (((global_step + 1) %args.eval_steps == 0) or global_step ==1) and eval_flag:
                 #Eval model with dev dataset
                 tr_loss = 0
                 nb_tr_examples, nb_tr_steps = 0, 0                     
@@ -413,6 +422,10 @@ def main():
                 result = {'eval_ppl': round(np.exp(eval_loss),5),
                           'global_step': global_step+1,
                           'train_loss': round(train_loss,5)}
+                epoch_log['global_step']=result['global_step']
+                epoch_log['train_loss']=result['train_loss']
+                epoch_log['eval_ppl']=result['eval_ppl']
+
                 for key in sorted(result.keys()):
                     logger.info("  %s = %s", key, str(result[key]))
                 logger.info("  "+"*"*20)   
@@ -478,6 +491,7 @@ def main():
 
                 (goldMap, predictionMap) = bleu.computeMaps(predictions, os.path.join(args.output_dir, "dev.gold")) 
                 dev_bleu=round(bleu.bleuFromMaps(goldMap, predictionMap)[0],2)
+                epoch_log['dev_bleu']=result['dev_bleu']
                 logger.info("  %s = %s "%("bleu-4",str(dev_bleu)))
                 logger.info("  "+"*"*20)    
                 if dev_bleu>best_bleu:
@@ -491,6 +505,8 @@ def main():
                     model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
                     output_model_file = os.path.join(output_dir, "pytorch_model.bin")
                     torch.save(model_to_save.state_dict(), output_model_file)
+
+            writeCSVLoggerFile(epoch_log=epoch_log, csvLoggerFile_path=csvLoggerFile_path)
                
     if args.do_test:
         files=[]
