@@ -69,49 +69,52 @@ if __name__ == "__main__":
 
     has_baselines = False
     data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/'
+    TRANSFORMS = ['transforms.Identity', 'transforms.RenameParameters']
+    for t_name in TRANSFORMS:
+        loc = data_path + t_name
+        tasks = []
 
-    tasks = []
-    for split in ["test", "train", "valid"]:
-        if not os.path.isfile(data_path + 'masked_{}.jsonl.gz'.format(split)):
-            continue
-        if split == 'baseline':
-            has_baselines = True
-        for line in gzip.open(data_path + 'masked_{}.jsonl.gz'.format(split)):
-            as_json = json.loads(line)
-            from_file = as_json['from_file'] if 'from_file' in as_json else '{}.java'.format(as_json['sha256_hash'])
-            tasks.append((split, from_file, as_json['source_tokens'], as_json['target_tokens']))
+        for split in ["test", "train", "valid"]:
+            if not os.path.isfile(loc + '/masked_{}.jsonl.gz'.format(split)):
+                continue
+            if split == 'baseline':
+                has_baselines = True
+            for line in gzip.open(loc + '/masked_{}.jsonl.gz'.format(split)):
+                as_json = json.loads(line)
+                from_file = as_json['from_file'] if 'from_file' in as_json else '{}.java'.format(as_json['sha256_hash'])
+                tasks.append((split, from_file, as_json['source_tokens'], as_json['target_tokens']))
 
-    pool = multiprocessing.Pool()
-    print("  + Inputs loaded")
+        pool = multiprocessing.Pool()
+        print("  + Inputs loaded")
 
-    out_map = {
-        'test': open(data_path + 'masked_token_test.tsv', 'w'),
-        'train': open(data_path + 'masked_token_train.tsv', 'w'),
-        'valid': open(data_path + 'masked_token_valid.tsv', 'w')
-    }
+        out_map = {
+            'test': open(loc + '/masked_token_test.tsv', 'w'),
+            'train': open(loc + '/masked_token_train.tsv', 'w'),
+            'valid': open(loc + '/masked_token_valid.tsv', 'w')
+        }
 
-    if has_baselines:
-        print("  + Has baselines file")
-        out_map['baseline'] = open(data_path + 'baseline.tsv', 'w')
-        out_map['baseline'].write('from_file\tsrc\ttgt\n')
+        if has_baselines:
+            print("  + Has baselines file")
+            out_map['baseline'] = open(loc + '/baseline.tsv', 'w')
+            out_map['baseline'].write('from_file\tsrc\ttgt\n')
 
-    print("  + Output files opened")
+        print("  + Output files opened")
 
-    out_map['test'].write('from_file\tsrc\ttgt\n')
-    out_map['train'].write('from_file\tsrc\ttgt\n')
-    out_map['valid'].write('from_file\tsrc\ttgt\n')
+        out_map['test'].write('from_file\tsrc\ttgt\n')
+        out_map['train'].write('from_file\tsrc\ttgt\n')
+        out_map['valid'].write('from_file\tsrc\ttgt\n')
 
-    print("  - Processing in parallel...")
-    iterator = tqdm.tqdm(
-        pool.imap_unordered(process, tasks, 1000),
-        desc="    - Tokenizing",
-        total=len(tasks)
-    )
-    for good, split, from_file, src, tgt in iterator:
-        if not good:  # Don't let length == 0 stuff slip through
-            continue
-        out_map[split].write(
-            '{}\t{}\t{}\n'.format(from_file, src, tgt)
+        print("  - Processing in parallel...")
+        iterator = tqdm.tqdm(
+            pool.imap_unordered(process, tasks, 1000),
+            desc="    - Tokenizing",
+            total=len(tasks)
         )
-    print("    + Tokenizing complete")
-    print("  + Done extracting tokens")
+        for good, split, from_file, src, tgt in iterator:
+            if not good:  # Don't let length == 0 stuff slip through
+                continue
+            out_map[split].write(
+                '{}\t{}\t{}\n'.format(from_file, src, tgt)
+            )
+        print("    + Tokenizing complete")
+        print("  + Done extracting tokens")

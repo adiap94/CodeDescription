@@ -22,17 +22,27 @@ if __name__ == "__main__":
 
     data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/'
 
-    ID_MAP = {}
+
     TRANSFORMS = ['transforms.RenameParameters']
 
     splits = ['test', 'train', 'valid']
     for split in splits:
-
+        print("Loading identity transform...")
+        ID_MAP = {}
+        with open(data_path + "{}/masked_token_{}.tsv".format('transforms.Identity',split), 'r') as identity_tsv:
+            reader = csv.reader(
+                (x.replace('\0', '') for x in identity_tsv),
+                delimiter='\t', quoting=csv.QUOTE_NONE
+            )
+            next(reader, None)
+            for line in reader:
+                ID_MAP[line[0]] = (line[1], line[2])
+        print("  + Loaded {} samples".format(len(ID_MAP)))
         print("Loading transformed samples...")
         TRANSFORMED = {}
         for transform_name in TRANSFORMS:
             TRANSFORMED[transform_name] = {}
-            with open(data_path + "/masked_token_{}.tsv".format(split), 'r') as current_tsv:
+            with open(data_path + "{}/masked_token_{}.tsv".format(transform_name,split), 'r') as current_tsv:
                 reader = csv.reader(
                     (x.replace('\0', '') for x in current_tsv),
                     delimiter='\t', quoting=csv.QUOTE_NONE

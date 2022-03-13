@@ -121,42 +121,44 @@ if __name__ == '__main__':
     Language.build_library('build/py-tree-sitter-languages.so', ['tree-sitter-python'])
     data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/'
     splits = ['test', 'train', 'valid']
+    TRANSFORMS = ['transforms.Identity','transforms.RenameParameters']
+    for t_name in TRANSFORMS:
 
-    for split in splits:
-        location = data_path + 'adv/{}/{}'.format('transforms.RenameParameters', split)
+        for split in splits:
+            location = data_path + 'adv/{}/{}'.format(t_name, split)
 
-        outMap[location] = gzip.open(
-            data_path + '/adv/masked_' + split + '.jsonl.gz',
-            'wb'
-        )
-
-        onlyfiles = [f for f in listdir(location.strip()) if isfile(join(location.strip(), f))]
-        for the_file in onlyfiles:
-            with open(join(location.strip(), the_file), 'r') as fhandle:
-                targets.append({
-                    'the_code': fhandle.read(),
-                    'language': 'python',
-                    'split': location,
-                    'from_file': the_file
-                })
-
-    results = pool.imap_unordered(process, targets, 2000)
-
-    accepts = 0
-    total = 0
-    func_count = 0
-    mismatches = 0
-    for status, functions in tqdm(results, total=len(targets), desc="  + Normalizing"):
-        total += 1
-        if status:
-            accepts += 1
-        for result in functions:
-            func_count += 1
-            outMap[result['split']].write(
-                (json.dumps(result) + '\n').encode()
+            outMap[location] = gzip.open(
+                data_path + '/adv/' + t_name + '/masked_' + split + '.jsonl.gz',
+                'wb'
             )
 
-    print("    - Parse success rate {:.2%}% ".format(float(accepts) / float(total)), file=sys.stderr)
-    print("    - Rejected {} files for parse failure".format(total - accepts), file=sys.stderr)
-    print("    - Rejected {} files for regex mismatch".format(mismatches), file=sys.stderr)
-    print("    + Finished. {} functions extraced".format(func_count), file=sys.stderr)
+            onlyfiles = [f for f in listdir(location.strip()) if isfile(join(location.strip(), f))]
+            for the_file in onlyfiles:
+                with open(join(location.strip(), the_file), 'r') as fhandle:
+                    targets.append({
+                        'the_code': fhandle.read(),
+                        'language': 'python',
+                        'split': location,
+                        'from_file': the_file
+                    })
+
+        results = pool.imap_unordered(process, targets, 2000)
+
+        accepts = 0
+        total = 0
+        func_count = 0
+        mismatches = 0
+        for status, functions in tqdm(results, total=len(targets), desc="  + Normalizing"):
+            total += 1
+            if status:
+                accepts += 1
+            for result in functions:
+                func_count += 1
+                outMap[result['split']].write(
+                    (json.dumps(result) + '\n').encode()
+                )
+
+        print("    - Parse success rate {:.2%}% ".format(float(accepts) / float(total)), file=sys.stderr)
+        print("    - Rejected {} files for parse failure".format(total - accepts), file=sys.stderr)
+        print("    - Rejected {} files for regex mismatch".format(mismatches), file=sys.stderr)
+        print("    + Finished. {} functions extraced".format(func_count), file=sys.stderr)
