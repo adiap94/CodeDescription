@@ -22,6 +22,6 @@ def save_params(args,out_dir):
     d = vars(args)
     d.pop('device', None) # this key type is not recognised
     d["workdir"] = out_dir
-    json_dump(d,os.path.join(out_dir,"config.json"))
+    json_dump(d,os.path.join(out_dir,"config_.json"))
 if __name__ == "__main__":
     pass

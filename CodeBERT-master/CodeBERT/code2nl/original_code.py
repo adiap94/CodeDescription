@@ -41,6 +41,7 @@ from torch.utils.data.distributed import DistributedSampler
 from transformers import (WEIGHTS_NAME, AdamW, get_linear_schedule_with_warmup,
                           RobertaConfig, RobertaModel, RobertaTokenizer)
 import utiles
+import time
 
 MODEL_CLASSES = {'roberta': (RobertaConfig, RobertaModel, RobertaTokenizer)}
 
@@ -69,7 +70,7 @@ def read_examples(filename):
     examples = []
     with open(filename, encoding="utf-8") as f:
         for idx, line in enumerate(f):
-            if DEBUG_MODE and idx >2000:
+            if DEBUG_MODE and idx >200:
                 break
             line = line.strip()
             js = json.loads(line)
@@ -158,8 +159,8 @@ def convert_examples_to_features(examples, tokenizer, args, stage=None):
 def worker_init_fn(worker_id):
     worker_info = torch.utils.data.get_worker_info()
     dataset = worker_info.dataset  # the dataset copy in this worker process
-    overall_start = dataset.start
-    overall_end = dataset.end
+    overall_start = 0
+    overall_end = len(dataset)
     # configure the dataset to only process the split workload
     per_worker = int(np.ceil((overall_end - overall_start) / float(worker_info.num_workers)))
     worker_id = worker_info.id
@@ -257,13 +258,18 @@ def main():
                         help="random seed for initialization")
     parser.add_argument("--debug_mode", action='store_true',
                         help="debug_mode for fast sanity check pre full run")
+    parser.add_argument("--define_gpu", default='0', type=str,
+                        help="")
     # print arguments
     args = parser.parse_args()
     logger.info(args)
-
+    time_str = time.strftime("%Y%m%d-%H%M%S")
     if args.debug_mode:
         global DEBUG_MODE
         DEBUG_MODE = True
+
+    if args.define_gpu:
+        os.environ["CUDA_VISIBLE_DEVICES"] = args.define_gpu
 
     # Setup CUDA, GPU & distributed training
     if args.local_rank == -1 or args.no_cuda:
@@ -279,14 +285,14 @@ def main():
     args.device = device
     # Set seed
     set_seed(args)
+    if os.path.exists(args.output_dir) is False:
+        os.makedirs(args.output_dir)
     training_log = {}
     bleu_log = {}
-    csvLoggerFile_path = os.path.join(args.out_dir, "history.csv")
-    csvLoggerFile_Blue_path = os.path.join(args.out_dir, "Bleuhistory.csv")
+    csvLoggerFile_path = os.path.join(args.output_dir, "history.csv")
+    csvLoggerFile_Blue_path = os.path.join(args.output_dir, "Bleuhistory.csv")
     # make dir if output_dir not exist
     print("out dir is: " + args.output_dir)
-    os.makedirs(args.output_dir, exist_ok=True)
-    os.makedirs(os.path.join(args.output_dir, "Models"), exist_ok=True)
     utiles.save_params(args=args, out_dir=args.output_dir)
 
 
@@ -321,6 +327,11 @@ def main():
         model = torch.nn.DataParallel(model)
 
     if args.do_train:
+        if DEBUG_MODE:
+            args.output_dir = os.path.join(args.output_dir,"debug", time_str)
+        else:
+            args.output_dir = os.path.join(args.output_dir,time_str)
+
         # Prepare training data loader
         train_examples = read_examples(args.train_filename)
         train_features = convert_examples_to_features(train_examples, tokenizer, args, stage='train')
@@ -329,8 +340,8 @@ def main():
         all_target_ids = torch.tensor([f.target_ids for f in train_features], dtype=torch.long)
         all_target_mask = torch.tensor([f.target_mask for f in train_features], dtype=torch.long)
         train_data = TensorDataset(all_source_ids, all_source_mask, all_target_ids, all_target_mask)
-        train_data['start'] = 0
-        train_data['end'] = len(train_examples)
+        # train_data['start'] = 0
+        # train_data['end'] = len(train_examples)
         if args.local_rank == -1:
             train_sampler = RandomSampler(train_data)
         else:
@@ -405,8 +416,8 @@ def main():
                     all_target_mask = torch.tensor([f.target_mask for f in eval_features], dtype=torch.long)
                     eval_data = TensorDataset(all_source_ids, all_source_mask, all_target_ids, all_target_mask)
                     dev_dataset['dev_loss'] = eval_examples, eval_data
-                    eval_data['start'] = 0
-                    eval_data['end'] = len(eval_examples)
+                    # eval_data['start'] = 0
+                    # eval_data['end'] = len(eval_examples)
                 eval_sampler = SequentialSampler(eval_data)
                 eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=args.eval_batch_size,num_workers=5,worker_init_fn=worker_init_fn)
 
@@ -435,7 +446,7 @@ def main():
                 for key in sorted(result.keys()):
                     logger.info("  %s = %s", key, str(result[key]))
                 logger.info("  " + "*" * 20)
-                training_log.epoch_log["step"] = global_step
+                training_log["step"] = global_step
                 training_log["val_loss"] = eval_loss
                 training_log["eval_ppl"] = round(np.exp(eval_loss), 5)
                 training_log['train_loss'] = round(train_loss, 5)
@@ -470,8 +481,8 @@ def main():
                     all_source_mask = torch.tensor([f.source_mask for f in eval_features], dtype=torch.long)
                     eval_data = TensorDataset(all_source_ids, all_source_mask)
                     dev_dataset['dev_bleu'] = eval_examples, eval_data
-                    eval_data['start'] = 0
-                    eval_data['end'] = len(eval_examples)
+                    # eval_data['start'] = 0
+                    # eval_data['end'] = len(eval_examples)
 
                 eval_sampler = SequentialSampler(eval_data)
                 eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=args.eval_batch_size,num_workers=5,worker_init_fn=worker_init_fn)
@@ -531,8 +542,8 @@ def main():
             all_source_ids = torch.tensor([f.source_ids for f in eval_features], dtype=torch.long)
             all_source_mask = torch.tensor([f.source_mask for f in eval_features], dtype=torch.long)
             eval_data = TensorDataset(all_source_ids, all_source_mask)
-            eval_data['start'] = 0
-            eval_data['end'] = len(eval_examples)
+            # eval_data['start'] = 0
+            # eval_data['end'] = len(eval_examples)
 
             # Calculate bleu
             eval_sampler = SequentialSampler(eval_data)
