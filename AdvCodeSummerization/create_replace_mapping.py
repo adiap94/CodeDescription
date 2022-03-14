@@ -8,7 +8,7 @@ from seq2seq.util.checkpoint import Checkpoint
 from seq2seq.dataset import SourceField, TargetField
 from seq2seq.evaluator import Evaluator
 from torch.autograd import Variable
-
+import torch.nn as nn
 import seq2seq
 import os
 import torchtext
@@ -251,18 +251,23 @@ if __name__ == "__main__":
     # print('Replace tokens:', replace_tokens)
     model_name_or_path = 'microsoft/codebert-base'
     model_type = 'roberta'
+    MODEL_CLASSES = {'roberta': (RobertaConfig, RobertaModel, RobertaTokenizer)}
 
-    config_class, model_class, tokenizer_class = MODEL_CLASSES[model_type]
-    config = config_class.from_pretrained(args.config_name if args.config_name else args.model_name_or_path)
-    tokenizer = tokenizer_class.from_pretrained(args.tokenizer_name if args.tokenizer_name else args.model_name_or_path,
-                                                do_lower_case=args.do_lower_case)
 
     # budild model
-    encoder = model_class.from_pretrained(args.model_name_or_path, config=config)
+
     config_class, model_class, tokenizer_class = MODEL_CLASSES[model_type]
     config = config_class.from_pretrained( model_name_or_path)
     tokenizer = tokenizer_class.from_pretrained(model_name_or_path,do_lower_case=True)
     encoder = model_class.from_pretrained(model_name_or_path, config=config)
+    decoder_layer = nn.TransformerDecoderLayer(d_model=config.hidden_size, nhead=config.num_attention_heads)
+    decoder = nn.TransformerDecoder(decoder_layer, num_layers=6)
+    model = Seq2Seq(encoder=encoder, decoder=decoder, config=config,
+                    beam_size=args.beam_size, max_length=args.max_target_length,
+                    sos_id=tokenizer.cls_token_id, eos_id=tokenizer.sep_token_id)
+    if args.load_model_path is not None:
+        logger.info("reload model from {}".format(args.load_model_path))
+        model.load_state_dict(torch.load(args.load_model_path))
     model, input_vocab, output_vocab = load_model(opt.expt_dir, opt.load_checkpoint)
 
     model.half()
