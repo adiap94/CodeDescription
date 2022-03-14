@@ -18,10 +18,15 @@ def json_dump(values, file_path=None):
         with open(file_path, 'w') as outfile:
             json.dump(values, outfile,  sort_keys=True, indent=4, separators=(',', ': '))
 
-def save_params(args,out_dir):
+def save_params(args,out_dir,str="train"):
     d = vars(args)
     d.pop('device', None) # this key type is not recognised
     d["workdir"] = out_dir
-    json_dump(d,os.path.join(out_dir,"config_.json"))
+    json_dump(d,os.path.join(out_dir,"config_"+str+".json"))
+
+def delete_random_token(tokens_vec):
+    idx = random.choice(np.where(tokens_vec!=1)[0])
+    tokens_vec[idx]=1
+    return tokens_vec
 if __name__ == "__main__":
     pass

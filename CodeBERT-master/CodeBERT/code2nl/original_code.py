@@ -302,8 +302,8 @@ def main():
     print("out dir is: " + args.output_dir)
     if os.path.exists(args.output_dir) is False:
         os.makedirs(args.output_dir)
+        os.chmod(args.output_dir, mode=0o777)
 
-    utiles.save_params(args=args, out_dir=args.output_dir)
 
 
     config_class, model_class, tokenizer_class = MODEL_CLASSES[args.model_type]
@@ -337,6 +337,7 @@ def main():
         model = torch.nn.DataParallel(model)
 
     if args.do_train:
+        utiles.save_params(args=args, out_dir=args.output_dir, str="train")
         csvLoggerFile_path = os.path.join(args.output_dir, "history.csv")
         csvLoggerFile_Blue_path = os.path.join(args.output_dir, "Bleuhistory.csv")
         # Prepare training data loader
@@ -462,6 +463,7 @@ def main():
                 last_output_dir = os.path.join(args.output_dir, 'checkpoint-last')
                 if not os.path.exists(last_output_dir):
                     os.makedirs(last_output_dir)
+
                 model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
                 output_model_file = os.path.join(last_output_dir, "pytorch_model.bin")
                 torch.save(model_to_save.state_dict(), output_model_file)
@@ -539,6 +541,7 @@ def main():
                     torch.save(model_to_save.state_dict(), output_model_file)
 
     if args.do_test:
+        utiles.save_params(args=args, out_dir=args.output_dir, str="test")
         files = []
         if args.dev_filename is not None:
             files.append(args.dev_filename)
