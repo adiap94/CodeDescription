@@ -266,9 +266,12 @@ def main():
     args = parser.parse_args()
     logger.info(args)
     time_str = time.strftime("%Y%m%d-%H%M%S")
+    global DEBUG_MODE
     if args.debug_mode:
-        global DEBUG_MODE
+
         DEBUG_MODE = True
+    else:
+        DEBUG_MODE = False
 
     if args.define_gpu:
         os.environ["CUDA_VISIBLE_DEVICES"] = args.define_gpu
@@ -351,7 +354,7 @@ def main():
         else:
             train_sampler = DistributedSampler(train_data)
         train_dataloader = DataLoader(train_data, sampler=train_sampler,
-                                      batch_size=args.train_batch_size // args.gradient_accumulation_steps,num_workers=5,worker_init_fn=worker_init_fn)
+                                      batch_size=args.train_batch_size // args.gradient_accumulation_steps,num_workers=0,worker_init_fn=worker_init_fn)
 
         num_train_optimization_steps = args.train_steps
 
@@ -423,7 +426,7 @@ def main():
                     # eval_data['start'] = 0
                     # eval_data['end'] = len(eval_examples)
                 eval_sampler = SequentialSampler(eval_data)
-                eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=args.eval_batch_size,num_workers=5,worker_init_fn=worker_init_fn)
+                eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=args.eval_batch_size,num_workers=0,worker_init_fn=worker_init_fn)
 
                 logger.info("\n***** Running evaluation *****")
                 logger.info("  Num examples = %d", len(eval_examples))
@@ -491,7 +494,7 @@ def main():
                     # eval_data['end'] = len(eval_examples)
 
                 eval_sampler = SequentialSampler(eval_data)
-                eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=args.eval_batch_size,num_workers=5,worker_init_fn=worker_init_fn)
+                eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=args.eval_batch_size,num_workers=0,worker_init_fn=worker_init_fn)
 
                 model.eval()
                 p = []
