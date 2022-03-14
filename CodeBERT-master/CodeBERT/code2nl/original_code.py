@@ -25,6 +25,8 @@ import sys
 import bleu
 import pickle
 import torch
+import torch.multiprocessing
+torch.multiprocessing.set_sharing_strategy('file_system')
 import json
 import random
 import logging
@@ -42,6 +44,7 @@ from transformers import (WEIGHTS_NAME, AdamW, get_linear_schedule_with_warmup,
                           RobertaConfig, RobertaModel, RobertaTokenizer)
 import utiles
 import time
+import fastai
 
 MODEL_CLASSES = {'roberta': (RobertaConfig, RobertaModel, RobertaTokenizer)}
 
@@ -69,9 +72,9 @@ def read_examples(filename, eval = False):
     examples = []
     with open(filename, encoding="utf-8") as f:
         for idx, line in enumerate(f):
-            if DEBUG_MODE and eval==True and idx>20:
+            if DEBUG_MODE and eval==True and idx>100:
                 break
-            if DEBUG_MODE and idx >500:
+            if DEBUG_MODE and idx >5000:
                 break
             line = line.strip()
             js = json.loads(line)
@@ -355,7 +358,7 @@ def main():
         else:
             train_sampler = DistributedSampler(train_data)
         train_dataloader = DataLoader(train_data, sampler=train_sampler,
-                                      batch_size=args.train_batch_size // args.gradient_accumulation_steps,num_workers=0,worker_init_fn=worker_init_fn)
+                                      batch_size=args.train_batch_size // args.gradient_accumulation_steps,num_workers=5,worker_init_fn=worker_init_fn)
 
         num_train_optimization_steps = args.train_steps
 
@@ -427,7 +430,7 @@ def main():
                     # eval_data['start'] = 0
                     # eval_data['end'] = len(eval_examples)
                 eval_sampler = SequentialSampler(eval_data)
-                eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=args.eval_batch_size,num_workers=0,worker_init_fn=worker_init_fn)
+                eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=args.eval_batch_size,num_workers=5,worker_init_fn=worker_init_fn)
 
                 logger.info("\n***** Running evaluation *****")
                 logger.info("  Num examples = %d", len(eval_examples))
@@ -496,7 +499,7 @@ def main():
                     # eval_data['end'] = len(eval_examples)
 
                 eval_sampler = SequentialSampler(eval_data)
-                eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=args.eval_batch_size,num_workers=0,worker_init_fn=worker_init_fn)
+                eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=args.eval_batch_size,num_workers=5,worker_init_fn=worker_init_fn)
 
                 model.eval()
                 p = []
