@@ -230,7 +230,8 @@ def main():
                         help="Set this flag if you are using an uncased model.")
     parser.add_argument("--no_cuda", action='store_true',
                         help="Avoid using CUDA when available")
-
+    parser.add_argument("--delete_token", action='store_true',
+                        help="delete_token in training")
     parser.add_argument("--train_batch_size", default=8, type=int,
                         help="Batch size per GPU/CPU for training.")
     parser.add_argument("--eval_batch_size", default=8, type=int,
@@ -389,6 +390,9 @@ def main():
             batch = next(train_dataloader)
             batch = tuple(t.to(device) for t in batch)
             source_ids, source_mask, target_ids, target_mask = batch
+            if args.delete_token:
+                target_ids = utiles.delete_random_token(target_ids.clone())
+
             loss, _, _ = model(source_ids=source_ids, source_mask=source_mask, target_ids=target_ids,
                                target_mask=target_mask)
 

@@ -25,7 +25,9 @@ def save_params(args,out_dir,str="train"):
     json_dump(d,os.path.join(out_dir,"config_"+str+".json"))
 
 def delete_random_token(tokens_vec):
-    idx = random.choice(np.where(tokens_vec!=1)[0])
+    idx_list_torch = (tokens_vec == 1).nonzero()
+    idx_list_np = np.squeeze(idx_list_torch.cpu().numpy())
+    idx = random.choice(idx_list_np)
     tokens_vec[idx]=1
     return tokens_vec
 if __name__ == "__main__":
