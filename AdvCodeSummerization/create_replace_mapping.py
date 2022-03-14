@@ -251,6 +251,14 @@ if __name__ == "__main__":
     # print('Replace tokens:', replace_tokens)
     model_name_or_path = 'microsoft/codebert-base'
     model_type = 'roberta'
+
+    config_class, model_class, tokenizer_class = MODEL_CLASSES[model_type]
+    config = config_class.from_pretrained(args.config_name if args.config_name else args.model_name_or_path)
+    tokenizer = tokenizer_class.from_pretrained(args.tokenizer_name if args.tokenizer_name else args.model_name_or_path,
+                                                do_lower_case=args.do_lower_case)
+
+    # budild model
+    encoder = model_class.from_pretrained(args.model_name_or_path, config=config)
     config_class, model_class, tokenizer_class = MODEL_CLASSES[model_type]
     config = config_class.from_pretrained( model_name_or_path)
     tokenizer = tokenizer_class.from_pretrained(model_name_or_path,do_lower_case=True)
