@@ -310,7 +310,23 @@ def process(item):
             results.append((False, split, t_name, the_hash, og_code))
     return results
 
+def remove_comment(code_string):
+    code_string_original = code_string
+    try:
+        while '"""' in code_string or '#' in code_string:
+            if '"""' in code_string:
+                idx_start  = code_string.index('"""')
+                idx_end =  code_string[idx_start+1:].index('"""')
+                idx_end = idx_end+2
+                code_string = code_string[:idx_start]+code_string[idx_start+1+idx_end+1:]
 
+            if '#' in code_string:
+                idx_start = code_string.index('#')
+                idx_end = code_string[idx_start+1:].index('\n')
+                code_string = code_string[:idx_start] + code_string[idx_start + 1 + idx_end + 1+1:]
+        return code_string
+    except:
+        return code_string_original
 if __name__ == "__main__":
     time_str = time.strftime("%Y%m%d-%H%M%S")
     print("Starting transform:")
@@ -323,11 +339,12 @@ if __name__ == "__main__":
     splits = ['test', 'train','valid']
     for split in splits:
         for line in open(data_path + '{}.jsonl'.format(split)):
-            line = line.strip()
+            # line = line.strip()
             as_json = json.loads(line)
-            code = as_json['code_tokens']
-            code = ' '.join(code).replace('\n', ' ')
-            code = ' '.join(code.strip().split())
+            code = as_json['code']
+            code = remove_comment(code_string=code)
+            # code = ' '.join(code).replace('\n', ' ')
+            # code = ' '.join(code.strip().split())
             tasks.append((split, as_json['sha'], code))
 
     print("    + Loaded {} transform tasks".format(len(tasks)))
