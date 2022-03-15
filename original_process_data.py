@@ -63,7 +63,7 @@ def chunked(iterable, n, strict=False):
     else:
         return iterator
 
-DATA_DIR='/home/student/project/resources/data/'
+DATA_DIR='/tcmldrive/project/resources/data_codesearch/CodeSearchNet/'
 
 def format_str(string):
     for char in ['\r\n', '\r', '\n']:

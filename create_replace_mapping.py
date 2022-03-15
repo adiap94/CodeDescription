@@ -2,14 +2,14 @@ import os
 import re
 import sys
 import json
-
-from seq2seq.loss import Perplexity
-from seq2seq.util.checkpoint import Checkpoint
+import seq2seq
+# from seq2seq.loss import Perplexity
+# from seq2seq.util.checkpoint import Checkpoint
 from seq2seq.dataset import SourceField, TargetField
 from seq2seq.evaluator import Evaluator
-from torch.autograd import Variable
+# from torch.autograd import Variable
 import torch.nn as nn
-import seq2seq
+
 import os
 import torchtext
 import torch
@@ -19,6 +19,8 @@ import csv
 import tqdm
 import numpy as np
 import random
+
+from model import Seq2Seq
 from transformers import (WEIGHTS_NAME, AdamW, get_linear_schedule_with_warmup,
                           RobertaConfig, RobertaModel, RobertaTokenizer)
 MODEL_CLASSES = {'roberta': (RobertaConfig, RobertaModel, RobertaTokenizer)}
@@ -28,8 +30,8 @@ random.seed(0)
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_path', action='store', dest='data_path', help='Path to data')
-    parser.add_argument('--expt_dir', action='store', dest='expt_dir', required=True,
-                        help='Path to experiment directory. If load_checkpoint is True, then path to checkpoint directory has to be provided')
+    # parser.add_argument('--expt_dir', action='store', dest='expt_dir', required=True,
+    #                     help='Path to experiment directory. If load_checkpoint is True, then path to checkpoint directory has to be provided')
     parser.add_argument('--load_checkpoint', action='store', dest='load_checkpoint', default='Best_F1')
     parser.add_argument('--num_replacements', default=50)
     parser.add_argument('--distinct', action='store_true', dest='distinct', default=True)
@@ -93,13 +95,13 @@ def classify_tok(tok):
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
-def load_model(expt_dir, model_name):
-    checkpoint_path = os.path.join(expt_dir, Checkpoint.CHECKPOINT_DIR_NAME, model_name)
-    checkpoint = Checkpoint.load(checkpoint_path)
-    model = checkpoint.model
-    input_vocab = checkpoint.input_vocab
-    output_vocab = checkpoint.output_vocab
-    return model, input_vocab, output_vocab
+# def load_model(expt_dir, model_name):
+#     checkpoint_path = os.path.join(expt_dir, Checkpoint.CHECKPOINT_DIR_NAME, model_name)
+#     checkpoint = Checkpoint.load(checkpoint_path)
+#     model = checkpoint.model
+#     input_vocab = checkpoint.input_vocab
+#     output_vocab = checkpoint.output_vocab
+#     return model, input_vocab, output_vocab
 
 
 def load_data(data_path,
@@ -263,18 +265,21 @@ if __name__ == "__main__":
     decoder_layer = nn.TransformerDecoderLayer(d_model=config.hidden_size, nhead=config.num_attention_heads)
     decoder = nn.TransformerDecoder(decoder_layer, num_layers=6)
     model = Seq2Seq(encoder=encoder, decoder=decoder, config=config,
-                    beam_size=args.beam_size, max_length=args.max_target_length,
+                    beam_size=10, max_length=128,
                     sos_id=tokenizer.cls_token_id, eos_id=tokenizer.sep_token_id)
-    if args.load_model_path is not None:
-        logger.info("reload model from {}".format(args.load_model_path))
-        model.load_state_dict(torch.load(args.load_model_path))
-    model, input_vocab, output_vocab = load_model(opt.expt_dir, opt.load_checkpoint)
-
+    load_model_path = "/tcmldrive/project/results/python/20220314-163735/checkpoint-best-bleu/pytorch_model.bin"
+    print("reload model from {}".format(load_model_path))
+    model.load_state_dict(torch.load(load_model_path))
+    # model, input_vocab, output_vocab = load_model(opt.expt_dir, opt.load_checkpoint)
+    input_vocab = tokenizer.encoder
+    output_vocab = tokenizer.decoder
     model.half()
 
     data, fields_inp, src, tgt, src_adv, idx_field = load_data(opt.data_path)
-    src.vocab = input_vocab
-    tgt.vocab = output_vocab
+    src.build_vocab(data)
+    tgt.build_vocab(data)
+    input_vocab = src.vocab
+    output_vocab = tgt.vocab
     src_adv.vocab = input_vocab
 
     print('Data size:', len(data))
@@ -294,7 +299,7 @@ if __name__ == "__main__":
         save_path = os.path.join(opt.expt_dir, fname)
 
     # Assuming save path ends with '.json'
-    save_path = save_path[:-5] + '-random.json'
+    save_path = save_path + '-random.json'
     json.dump(rand_d, open(save_path, 'w'), indent=4)
     print('  + Saved:', save_path)
 
