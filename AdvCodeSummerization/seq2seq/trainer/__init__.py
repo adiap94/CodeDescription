@@ -1,2 +1,0 @@
-from .supervised_trainer import SupervisedTrainer
-from .supervised_adversarial_trainer import SupervisedAdversarialTrainer
