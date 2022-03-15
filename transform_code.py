@@ -292,8 +292,8 @@ def process(item):
             t_rename_parameters
         ),
         (
-          'transforms.Identity',
-          t_identity
+            'transforms.Identity',
+            t_identity
         )
     ]
 
@@ -310,23 +310,26 @@ def process(item):
             results.append((False, split, t_name, the_hash, og_code))
     return results
 
+
 def remove_comment(code_string):
     code_string_original = code_string
     try:
         while '"""' in code_string or '#' in code_string:
             if '"""' in code_string:
-                idx_start  = code_string.index('"""')
-                idx_end =  code_string[idx_start+1:].index('"""')
-                idx_end = idx_end+2
-                code_string = code_string[:idx_start]+code_string[idx_start+1+idx_end+1:]
+                idx_start = code_string.index('"""')
+                idx_end = code_string[idx_start + 1:].index('"""')
+                idx_end = idx_end + 2
+                code_string = code_string[:idx_start] + code_string[idx_start + 1 + idx_end + 1:]
 
             if '#' in code_string:
                 idx_start = code_string.index('#')
-                idx_end = code_string[idx_start+1:].index('\n')
-                code_string = code_string[:idx_start] + code_string[idx_start + 1 + idx_end + 1+1:]
+                idx_end = code_string[idx_start + 1:].index('\n')
+                code_string = code_string[:idx_start] + code_string[idx_start + 1 + idx_end + 1 + 1:]
         return code_string
     except:
         return code_string_original
+
+
 if __name__ == "__main__":
     time_str = time.strftime("%Y%m%d-%H%M%S")
     print("Starting transform:")
@@ -336,7 +339,7 @@ if __name__ == "__main__":
     tasks = []
 
     print("  + Loading tasks...")
-    splits = ['test', 'train','valid']
+    splits = ['test', 'train', 'valid']
     for split in splits:
         for line in open(data_path + '{}.jsonl'.format(split)):
             # line = line.strip()
@@ -352,17 +355,18 @@ if __name__ == "__main__":
 
     print("  + Transforming in parallel...")
     names_covered = []
-    for changed, split, t_name, the_hash, code in itertools.chain.from_iterable(tqdm(results, desc="    + Progress", total=len(tasks))):
+    for changed, split, t_name, the_hash, code in itertools.chain.from_iterable(
+            tqdm(results, desc="    + Progress", total=len(tasks))):
         if not changed:
             continue
 
         if (t_name + split) not in names_covered:
             names_covered.append(t_name + split)
-            out_dir_path= os.path.join(data_path ,"adv", 'adv_'+time_str,t_name,split)
+            out_dir_path = os.path.join(data_path, "adv", 'adv_' + time_str, t_name, split)
             os.makedirs(out_dir_path, exist_ok=True)
             os.chmod(out_dir_path, mode=0o777)
 
-        file_path = os.path.join(out_dir_path,the_hash+".py")
+        file_path = os.path.join(out_dir_path, the_hash + ".py")
         with open(file_path, 'w') as fout:
             fout.write('{}\n'.format(code))
 
