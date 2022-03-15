@@ -119,16 +119,16 @@ if __name__ == '__main__':
     targets = []
     outMap = {}
     Language.build_library('build/py-tree-sitter-languages.so', ['tree-sitter-python'])
-    data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/'
+    data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220315-161632/'
     splits = ['test', 'train', 'valid']
     TRANSFORMS = ['transforms.Identity','transforms.RenameParameters']
     for t_name in TRANSFORMS:
 
         for split in splits:
-            location = data_path + 'adv/{}/{}'.format(t_name, split)
+            location = data_path + '{}/{}'.format(t_name, split)
 
             outMap[location] = gzip.open(
-                data_path + '/adv/' + t_name + '/masked_' + split + '.jsonl.gz',
+                data_path +t_name + '/masked_' + split + '.jsonl.gz',
                 'wb'
             )
 

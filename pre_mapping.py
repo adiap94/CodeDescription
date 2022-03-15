@@ -20,7 +20,7 @@ def handle_replacement_tokens(line):
 if __name__ == "__main__":
     csv.field_size_limit(sys.maxsize)
 
-    data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/'
+    data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220315-161632'
 
 
     TRANSFORMS = ['transforms.RenameParameters']
@@ -29,7 +29,7 @@ if __name__ == "__main__":
     for split in splits:
         print("Loading identity transform...")
         ID_MAP = {}
-        with open(data_path + "{}/masked_token_{}.tsv".format('transforms.Identity',split), 'r') as identity_tsv:
+        with open(os.path.join(data_path,'transforms.Identity',"masked_token_"+split+".tsv"), 'r') as identity_tsv:
             reader = csv.reader(
                 (x.replace('\0', '') for x in identity_tsv),
                 delimiter='\t', quoting=csv.QUOTE_NONE
@@ -42,7 +42,7 @@ if __name__ == "__main__":
         TRANSFORMED = {}
         for transform_name in TRANSFORMS:
             TRANSFORMED[transform_name] = {}
-            with open(data_path + "{}/masked_token_{}.tsv".format(transform_name,split), 'r') as current_tsv:
+            with open(os.path.join(data_path , transform_name,"masked_token_"+split+".tsv"), 'r') as current_tsv:
                 reader = csv.reader(
                     (x.replace('\0', '') for x in current_tsv),
                     delimiter='\t', quoting=csv.QUOTE_NONE
@@ -55,7 +55,7 @@ if __name__ == "__main__":
             ))
 
         print("Writing adv. {}ing samples...".format(split))
-        with open(data_path + "/adv_{}.tsv".format(split), "w") as out_f:
+        with open(os.path.join(data_path,"adv_"+split+".tsv"), "w") as out_f:
             out_f.write('index\tsrc\ttgt\t{}\n'.format(
                 '\t'.join([
                     '{}'.format(i) for i in TRANSFORMS

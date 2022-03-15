@@ -13,7 +13,7 @@ import multiprocessing
 import re
 import resource
 import hashlib
-
+import time
 from tqdm import tqdm
 
 from os import listdir
@@ -312,6 +312,7 @@ def process(item):
 
 
 if __name__ == "__main__":
+    time_str = time.strftime("%Y%m%d-%H%M%S")
     print("Starting transform:")
     pool = multiprocessing.Pool(1)
     data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/'
@@ -322,9 +323,12 @@ if __name__ == "__main__":
     splits = ['test', 'train','valid']
     for split in splits:
         for line in open(data_path + '{}.jsonl'.format(split)):
+            line = line.strip()
             as_json = json.loads(line)
-            the_code = as_json['code']
-            tasks.append((split, as_json['sha'], the_code))
+            code = as_json['code_tokens']
+            code = ' '.join(code).replace('\n', ' ')
+            code = ' '.join(code.strip().split())
+            tasks.append((split, as_json['sha'], code))
 
     print("    + Loaded {} transform tasks".format(len(tasks)))
     results = pool.imap_unordered(process, tasks, 3000)
@@ -337,9 +341,12 @@ if __name__ == "__main__":
 
         if (t_name + split) not in names_covered:
             names_covered.append(t_name + split)
-            os.makedirs(data_path + 'adv/{}/{}'.format(t_name, split), exist_ok=True)
+            out_dir_path= os.path.join(data_path ,"adv", 'adv_'+time_str,t_name,split)
+            os.makedirs(out_dir_path, exist_ok=True)
+            os.chmod(out_dir_path, mode=0o777)
 
-        with open(data_path + 'adv/{}/{}/'.format(t_name, split) + '{}.py'.format(the_hash), 'w') as fout:
+        file_path = os.path.join(out_dir_path,the_hash+".py")
+        with open(file_path, 'w') as fout:
             fout.write('{}\n'.format(code))
 
     print("  + Transforms complete!")

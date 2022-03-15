@@ -68,18 +68,18 @@ if __name__ == "__main__":
     print("Loading inputs...")
 
     has_baselines = False
-    data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/'
+    data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220315-161632'
     TRANSFORMS = ['transforms.Identity', 'transforms.RenameParameters']
     for t_name in TRANSFORMS:
-        loc = data_path + t_name
+        loc = os.path.join(data_path, t_name)
         tasks = []
 
         for split in ["test", "train", "valid"]:
-            if not os.path.isfile(loc + '/masked_{}.jsonl.gz'.format(split)):
+            if not os.path.isfile(os.path.join(loc + 'masked_'+split+'.jsonl.gz')):
                 continue
             if split == 'baseline':
                 has_baselines = True
-            for line in gzip.open(loc + '/masked_{}.jsonl.gz'.format(split)):
+            for line in gzip.open(os.path.join(loc + 'masked_'+split+'.jsonl.gz')):
                 as_json = json.loads(line)
                 from_file = as_json['from_file'] if 'from_file' in as_json else '{}.java'.format(as_json['sha256_hash'])
                 tasks.append((split, from_file, as_json['source_tokens'], as_json['target_tokens']))
@@ -88,14 +88,14 @@ if __name__ == "__main__":
         print("  + Inputs loaded")
 
         out_map = {
-            'test': open(loc + '/masked_token_test.tsv', 'w'),
-            'train': open(loc + '/masked_token_train.tsv', 'w'),
-            'valid': open(loc + '/masked_token_valid.tsv', 'w')
+            'test': open(os.path.join(loc , 'masked_token_test.tsv'), 'w'),
+            'train': open(os.path.join(loc , 'masked_token_train.tsv'), 'w'),
+            'valid': open(os.path.join(loc , 'masked_token_valid.tsv'), 'w')
         }
 
         if has_baselines:
             print("  + Has baselines file")
-            out_map['baseline'] = open(loc + '/baseline.tsv', 'w')
+            out_map['baseline'] = open(os.path.join(loc + 'baseline.tsv'))
             out_map['baseline'].write('from_file\tsrc\ttgt\n')
 
         print("  + Output files opened")
