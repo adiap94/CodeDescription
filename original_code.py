@@ -42,7 +42,7 @@ from torch.utils.data import DataLoader, Dataset, SequentialSampler, RandomSampl
 from torch.utils.data.distributed import DistributedSampler
 from transformers import (WEIGHTS_NAME, AdamW, get_linear_schedule_with_warmup,
                           RobertaConfig, RobertaModel, RobertaTokenizer)
-import utiles
+import utiles_codebert
 import time
 import fastai
 
@@ -341,7 +341,7 @@ def main():
         model = torch.nn.DataParallel(model)
 
     if args.do_train:
-        utiles.save_params(args=args, out_dir=args.output_dir, str="train")
+        utiles_codebert.save_params(args=args, out_dir=args.output_dir, str="train")
         csvLoggerFile_path = os.path.join(args.output_dir, "history.csv")
         csvLoggerFile_Blue_path = os.path.join(args.output_dir, "Bleuhistory.csv")
         # Prepare training data loader
@@ -391,7 +391,7 @@ def main():
             batch = tuple(t.to(device) for t in batch)
             source_ids, source_mask, target_ids, target_mask = batch
             if args.delete_token:
-                target_ids = utiles.delete_random_token(target_ids.clone())
+                target_ids = utiles_codebert.delete_random_token(target_ids.clone())
 
             loss, _, _ = model(source_ids=source_ids, source_mask=source_mask, target_ids=target_ids,
                                target_mask=target_mask)
@@ -548,7 +548,7 @@ def main():
                     torch.save(model_to_save.state_dict(), output_model_file)
 
     if args.do_test:
-        utiles.save_params(args=args, out_dir=args.output_dir, str="test")
+        utiles_codebert.save_params(args=args, out_dir=args.output_dir, str="test")
         files = []
         if args.dev_filename is not None:
             files.append(args.dev_filename)
