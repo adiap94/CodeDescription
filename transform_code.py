@@ -283,6 +283,100 @@ def t_identity(the_ast):
     return True, the_ast
 
 
+def t_unroll_whiles(the_ast, uid=1):
+    if len(the_ast.body) == 0 or not isinstance(the_ast.body[0], ast.FunctionDef):
+        return False, the_ast
+
+    class UnrollWhiles(ast.NodeTransformer):
+        def __init__(self, selection):
+            self.selection = selection
+            self.count = 0
+            self.done = False
+            super().__init__()
+
+        def visit_While(self, node):
+            if self.done:
+                return node
+            if self.count != self.selection:
+                self.count += 1
+                return node
+
+            self.done = True
+            return ast.While(
+                test=node.test,
+                body=node.body + [node, ast.Break()],
+                orelse=[]
+            )
+
+    changed = False
+    count = 0
+
+    for node in ast.walk(the_ast):
+        if isinstance(node, ast.While):
+            changed = True
+            count += 1
+
+    if count == 0:
+        return False, the_ast
+
+    return changed, UnrollWhiles(random.randint(0, count - 1)).visit(the_ast)
+
+
+def t_wrap_try_catch(the_ast, uid=1):
+    if len(the_ast.body) == 0 or not isinstance(the_ast.body[0], ast.FunctionDef):
+        return False, the_ast
+
+    temp = ast.Try(
+        body=the_ast.body[0].body,
+        handlers=[ast.ExceptHandler(
+            type=ast.Name(id='Exception', ctx=ast.Load()),
+            name='REPLACME' + str(uid),
+            body=[ast.Raise()]
+        )],
+        orelse=[],
+        finalbody=[]
+    )
+
+    the_ast.body[0].body = [temp]
+
+    return True, the_ast
+
+
+def t_add_dead_code(the_ast, uid=1):
+    if len(the_ast.body) == 0 or not isinstance(the_ast.body[0], ast.FunctionDef):
+        return False, the_ast
+
+    if bool(random.getrandbits(1)):
+        the_ast.body[0].body.insert(
+            0,
+            ast.If(
+                test=ast.Name(id="False", ctx=ast.Load()),
+                body=[
+                    ast.Assign(
+                        targets=[ast.Name(id="REPLACME" + str(uid), ctx=ast.Store())],
+                        value=ast.Num(n=1)
+                    )
+                ],
+                orelse=[]
+            )
+        )
+    else:
+        the_ast.body[0].body.append(
+            ast.If(
+                test=ast.Name(id="False", ctx=ast.Load()),
+                body=[
+                    ast.Assign(
+                        targets=[ast.Name(id="REPLACME" + str(uid), ctx=ast.Store())],
+                        value=ast.Num(n=1)
+                    )
+                ],
+                orelse=[]
+            )
+        )
+
+    return True, the_ast
+
+
 def process(item):
     (split, the_hash, og_code) = item
 
@@ -296,6 +390,9 @@ def process(item):
             t_identity
         )
     ]
+    transforms.append(('transforms.RenameLocalVariables',  t_rename_local_variables))
+    transforms.append(('transforms.RenameFields', t_rename_fields))
+    transforms.append(('transforms.AddDeadCode', t_add_dead_code))
 
     results = []
     for t_name, t_func in transforms:
@@ -317,20 +414,21 @@ def remove_comment(code_string):
         while '"""' in code_string or '#' in code_string:
             if '"""' in code_string:
                 idx_start = code_string.index('"""')
-                last_index_doen_line = code_string[:idx_start].rindex('\n')
+                #last_index_doen_line = code_string[:idx_start].rindex('\n')
                 idx_end = code_string[idx_start + 1:].index('"""')
                 idx_end = idx_end + 2
-                if code_string[idx_start + 1 + idx_end + 1] == '\n':
-                    idx_end +=1
-                code_string = code_string[:last_index_doen_line+1] + code_string[idx_start + 1 + idx_end + 2:]
+                # if code_string[idx_start + 1 + idx_end + 1] == '\n':
+                #     idx_end +=1
+                # code_string = code_string[:last_index_doen_line+1] + code_string[idx_start + 1 + idx_end + 2:]
+                code_string = code_string[:idx_start] + code_string[idx_start + 1 + idx_end + 1:]
 
-
-            if '#' in code_string:
+            if ' #' in code_string or '\n#'  in code_string:
                 idx_start = code_string.index('#')
                 idx_end = code_string[idx_start + 1:].index('\n')
-                last_index_doen_line = code_string[:idx_start].rindex('\n')
-                code_string = code_string[:last_index_doen_line+1] + code_string[idx_start + 1 + idx_end + 1 + 1:]
-        code_string = code_string+"     " +"\n\n"
+                #last_index_doen_line = code_string[:idx_start].rindex('\n')
+                #code_string = code_string[:last_index_doen_line+1] + code_string[idx_start + 1 + idx_end + 1 + 1:]
+                code_string = code_string[:idx_start] + code_string[idx_start + 1 + idx_end + 1 + 1:]
+        code_string = code_string+"\n\n"
         return code_string
     except:
         return code_string_original
@@ -339,46 +437,42 @@ def remove_comment(code_string):
 if __name__ == "__main__":
     time_str = time.strftime("%Y%m%d-%H%M%S")
     print("Starting transform:")
-
+    pool = multiprocessing.Pool(1)
     data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/'
 
     tasks = []
     pool = multiprocessing.Pool(1)
     print("  + Loading tasks...")
-    splits = ['test', 'train', 'valid']
+    splits =['test'] #['test', 'train', 'valid']
     for split in splits:
-        for line in open(data_path + '{}.jsonl'.format(split)):
+        for idx, line in enumerate(open(data_path + '{}.jsonl'.format(split))):
+            if idx > 100:
+                break
             # line = line.strip()
             as_json = json.loads(line)
             code = as_json['code']
             code = remove_comment(code_string=code)
-            # code = ' '.join(code).replace('\n', ' ')
-            # code = ' '.join(code.strip().split())
-            try:
-                formatted_code, changed = FormatCode(code)
-            except:
-                formatted_code = code
-            tasks.append((split, as_json['sha'], formatted_code))
+            tasks.append((split, as_json['sha'], code))
 
-    pool = multiprocessing.Pool(1)
+
     print("    + Loaded {} transform tasks".format(len(tasks)))
     results = pool.imap_unordered(process, tasks, 3000)
 
     print("  + Transforming in parallel...")
     names_covered = []
-    for changed, split, t_name, the_hash, code in itertools.chain.from_iterable(
+    for idx, single_result in enumerate(
             tqdm(results, desc="    + Progress", total=len(tasks))):
-        if not changed:
-            continue
-
-        if (t_name + split) not in names_covered:
-            names_covered.append(t_name + split)
+        for changed, split, t_name, the_hash, code in single_result:
+            if not changed:
+                continue
             out_dir_path = os.path.join(data_path, "adv", 'adv_' + time_str, t_name, split)
-            os.makedirs(out_dir_path, exist_ok=True)
-            os.chmod(out_dir_path, mode=0o777)
+            if (t_name + split) not in names_covered:
+                names_covered.append(t_name + split)
+                os.makedirs(out_dir_path, exist_ok=True)
+                os.chmod(out_dir_path, mode=0o777)
 
-        file_path = os.path.join(out_dir_path, the_hash + ".py")
-        with open(file_path, 'w') as fout:
-            fout.write('{}\n'.format(code))
+            file_path = os.path.join(out_dir_path, str(idx) + ".py")
+            with open(file_path, 'w') as fout:
+                fout.write('{}\n'.format(code))
 
     print("  + Transforms complete!")

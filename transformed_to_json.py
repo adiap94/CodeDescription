@@ -121,7 +121,7 @@ if __name__ == '__main__':
     Language.build_library('build/py-tree-sitter-languages.so', ['tree-sitter-python'])
     data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220315-161632/'
     splits = ['test', 'train', 'valid']
-    TRANSFORMS = ['transforms.Identity','transforms.RenameParameters']
+    TRANSFORMS = ['transforms.Identity','transforms.RenameParameters','transforms.RenameLocalVariables', 'transforms.RenameFields', 'transforms.AddDeadCode']
     for t_name in TRANSFORMS:
 
         for split in splits:
