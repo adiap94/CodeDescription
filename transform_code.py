@@ -15,7 +15,7 @@ import resource
 import hashlib
 import time
 from tqdm import tqdm
-
+from yapf.yapflib.yapf_api import FormatCode
 from os import listdir
 from os.path import isfile, join
 
@@ -325,6 +325,7 @@ def remove_comment(code_string):
                 idx_start = code_string.index('#')
                 idx_end = code_string[idx_start + 1:].index('\n')
                 code_string = code_string[:idx_start] + code_string[idx_start + 1 + idx_end + 1 + 1:]
+        code_string = code_string+"     " +"\n\n"
         return code_string
     except:
         return code_string_original
@@ -333,11 +334,11 @@ def remove_comment(code_string):
 if __name__ == "__main__":
     time_str = time.strftime("%Y%m%d-%H%M%S")
     print("Starting transform:")
-    pool = multiprocessing.Pool(1)
+
     data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/'
 
     tasks = []
-
+    pool = multiprocessing.Pool(1)
     print("  + Loading tasks...")
     splits = ['test', 'train', 'valid']
     for split in splits:
@@ -348,8 +349,13 @@ if __name__ == "__main__":
             code = remove_comment(code_string=code)
             # code = ' '.join(code).replace('\n', ' ')
             # code = ' '.join(code.strip().split())
-            tasks.append((split, as_json['sha'], code))
+            try:
+                formatted_code, changed = FormatCode(code)
+            except:
+                formatted_code = code
+            tasks.append((split, as_json['sha'], formatted_code))
 
+    pool = multiprocessing.Pool(1)
     print("    + Loaded {} transform tasks".format(len(tasks)))
     results = pool.imap_unordered(process, tasks, 3000)
 
