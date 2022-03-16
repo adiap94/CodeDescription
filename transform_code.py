@@ -317,14 +317,19 @@ def remove_comment(code_string):
         while '"""' in code_string or '#' in code_string:
             if '"""' in code_string:
                 idx_start = code_string.index('"""')
+                last_index_doen_line = code_string[:idx_start].rindex('\n')
                 idx_end = code_string[idx_start + 1:].index('"""')
                 idx_end = idx_end + 2
-                code_string = code_string[:idx_start] + code_string[idx_start + 1 + idx_end + 1:]
+                if code_string[idx_start + 1 + idx_end + 1] == '\n':
+                    idx_end +=1
+                code_string = code_string[:last_index_doen_line+1] + code_string[idx_start + 1 + idx_end + 2:]
+
 
             if '#' in code_string:
                 idx_start = code_string.index('#')
                 idx_end = code_string[idx_start + 1:].index('\n')
-                code_string = code_string[:idx_start] + code_string[idx_start + 1 + idx_end + 1 + 1:]
+                last_index_doen_line = code_string[:idx_start].rindex('\n')
+                code_string = code_string[:last_index_doen_line+1] + code_string[idx_start + 1 + idx_end + 1 + 1:]
         code_string = code_string+"     " +"\n\n"
         return code_string
     except:
