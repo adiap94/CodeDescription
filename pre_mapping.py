@@ -20,12 +20,13 @@ def handle_replacement_tokens(line):
 if __name__ == "__main__":
     csv.field_size_limit(sys.maxsize)
 
-    data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220315-161632'
+    data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220317-143412'
 
 
-    TRANSFORMS = ['transforms.RenameParameters']
+    TRANSFORMS = ['transforms.RenameParameters','transforms.RenameLocalVariables', 'transforms.RenameFields', 'transforms.AddDeadCode']
 
-    splits = ['test', 'train', 'valid']
+    # splits = ['test', 'train', 'valid']
+    splits = ['test']
     for split in splits:
         print("Loading identity transform...")
         ID_MAP = {}

@@ -444,6 +444,8 @@ if __name__ == "__main__":
     data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/'
 
     tasks = []
+    pool = multiprocessing.Pool()
+
     print("  + Loading tasks...")
     splits =['test', 'train', 'valid']
     for split in splits:
@@ -454,10 +456,9 @@ if __name__ == "__main__":
             code = remove_comment(code_string=code)
             tasks.append((split, as_json['sha'], code))
 
-
+    results = pool.imap_unordered(process, tasks, 4000)
     print("    + Loaded {} transform tasks".format(len(tasks)))
-    pool = multiprocessing.Pool()
-    results = pool.imap_unordered(process, tasks, 3000)
+
 
     print("  + Transforming in parallel...")
     names_covered = []
