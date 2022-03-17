@@ -411,23 +411,26 @@ def process(item):
 def remove_comment(code_string):
     code_string_original = code_string
     try:
-        while '"""' in code_string or '#' in code_string:
-            if '"""' in code_string:
-                idx_start = code_string.index('"""')
-                #last_index_doen_line = code_string[:idx_start].rindex('\n')
-                idx_end = code_string[idx_start + 1:].index('"""')
-                idx_end = idx_end + 2
-                # if code_string[idx_start + 1 + idx_end + 1] == '\n':
-                #     idx_end +=1
-                # code_string = code_string[:last_index_doen_line+1] + code_string[idx_start + 1 + idx_end + 2:]
-                code_string = code_string[:idx_start] + code_string[idx_start + 1 + idx_end + 1:]
+        while '"""' in code_string:
+            idx_start = code_string.index('"""')
+            #last_index_doen_line = code_string[:idx_start].rindex('\n')
+            idx_end = code_string[idx_start + 1:].index('"""')
+            idx_end = idx_end + 2
+            # if code_string[idx_start + 1 + idx_end + 1] == '\n':
+            #     idx_end +=1
+            # code_string = code_string[:last_index_doen_line+1] + code_string[idx_start + 1 + idx_end + 2:]
+            code_string = code_string[:idx_start] + code_string[idx_start + 1 + idx_end + 1:]
+    except:
+        return code_string_original
 
-            if ' #' in code_string or '\n#'  in code_string:
-                idx_start = code_string.index('#')
-                idx_end = code_string[idx_start + 1:].index('\n')
-                #last_index_doen_line = code_string[:idx_start].rindex('\n')
-                #code_string = code_string[:last_index_doen_line+1] + code_string[idx_start + 1 + idx_end + 1 + 1:]
-                code_string = code_string[:idx_start] + code_string[idx_start + 1 + idx_end + 1 + 1:]
+    code_string_original = code_string
+    try:
+        while ' #' in code_string or '\n#'  in code_string:
+            idx_start = code_string.index('#')
+            idx_end = code_string[idx_start + 1:].index('\n')
+            #last_index_doen_line = code_string[:idx_start].rindex('\n')
+            #code_string = code_string[:last_index_doen_line+1] + code_string[idx_start + 1 + idx_end + 1 + 1:]
+            code_string = code_string[:idx_start] + code_string[idx_start + 1 + idx_end + 1 + 1:]
         code_string = code_string+"\n\n"
         return code_string
     except:
@@ -437,13 +440,12 @@ def remove_comment(code_string):
 if __name__ == "__main__":
     time_str = time.strftime("%Y%m%d-%H%M%S")
     print("Starting transform:")
-    pool = multiprocessing.Pool(1)
+
     data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/'
 
     tasks = []
-    pool = multiprocessing.Pool(1)
     print("  + Loading tasks...")
-    splits =['test'] #['test', 'train', 'valid']
+    splits =['test', 'train', 'valid']
     for split in splits:
         for idx, line in enumerate(open(data_path + '{}.jsonl'.format(split))):
             if idx > 100:
@@ -456,6 +458,7 @@ if __name__ == "__main__":
 
 
     print("    + Loaded {} transform tasks".format(len(tasks)))
+    pool = multiprocessing.Pool()
     results = pool.imap_unordered(process, tasks, 3000)
 
     print("  + Transforming in parallel...")
