@@ -27,12 +27,22 @@ def alignAugmentData2Source(tsv_path,source_path,out_dir=None):
 
     # alignment
     for index,row in df.iterrows():
-        src = row.src
+        tft = row.tgt
+        source_info = df_source[df_source["func_name"]==tft]
         for aug_type in augmentation_type_list:
+            d = {}
             code_str = row[aug_type]
             # TODO - THERE IS STILL PROBLEM WITH [ OR ] IN REGEX
             code_tokens = re.findall(r"[\w']+|[.,!?;[{}()/]", code_str)
 
+            d["func_name"] = source_info["func_name"]
+            d["code"] = code_str
+            d['code_tokens'] = code_tokens
+            d["docstring"] = source_info["docstring"]
+            d["docstring_tokens"] = source_info["docstring_tokens"]
+
+            # save to jsonl
+            #TODO
 
     pass
 
