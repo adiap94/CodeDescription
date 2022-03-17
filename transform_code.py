@@ -448,8 +448,6 @@ if __name__ == "__main__":
     splits =['test', 'train', 'valid']
     for split in splits:
         for idx, line in enumerate(open(data_path + '{}.jsonl'.format(split))):
-            if idx > 100:
-                break
             # line = line.strip()
             as_json = json.loads(line)
             code = as_json['code']
