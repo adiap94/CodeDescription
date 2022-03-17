@@ -36,7 +36,7 @@ with open(opt.source_data_path, 'r') as in_f:
             for i, sample in enumerate(parts[1:]):
                 col = i + 1
                 new_part = sample
-                if colnames[col] == 'src' or colnames[col] == 'tgt' or colnames[col] == 'transforms.Identity':
+                if colnames[col] == 'src' or colnames[col] == 'tgt' or colnames[col] == 'transforms.Identity' or colnames[col] == 'filename':
                     new_parts.append(new_part)
                     continue
                 if index not in mapping[colnames[col]]:
