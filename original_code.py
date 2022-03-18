@@ -69,28 +69,32 @@ class Example(object):
 
 def read_examples(filename, eval = False):
     """Read examples from filename."""
+    if len(filename.split(",")) > 1:
+        filename = filename.split(",")
+
     examples = []
-    with open(filename, encoding="utf-8") as f:
-        for idx, line in enumerate(f):
-            if DEBUG_MODE and eval==True and idx>100:
-                break
-            if DEBUG_MODE and idx >5000:
-                break
-            line = line.strip()
-            js = json.loads(line)
-            if 'idx' not in js:
-                js['idx'] = idx
-            code = ' '.join(js['code_tokens']).replace('\n', ' ')
-            code = ' '.join(code.strip().split())
-            nl = ' '.join(js['docstring_tokens']).replace('\n', '')
-            nl = ' '.join(nl.strip().split())
-            examples.append(
-                Example(
-                    idx=idx,
-                    source=code,
-                    target=nl,
+    ref_idx = 0
+    for filename_path in filename:
+        with open(filename_path, encoding="utf-8") as f:
+            for idx, line in enumerate(f):
+                if DEBUG_MODE and len(examples)==20:
+                    break
+                line = line.strip()
+                js = json.loads(line)
+                if 'idx' not in js:
+                    js['idx'] = idx
+                code = ' '.join(js['code_tokens']).replace('\n', ' ')
+                code = ' '.join(code.strip().split())
+                nl = ' '.join(js['docstring_tokens']).replace('\n', '')
+                nl = ' '.join(nl.strip().split())
+                examples.append(
+                    Example(
+                        idx=idx+ref_idx,
+                        source=code,
+                        target=nl,
+                    )
                 )
-            )
+            ref_idx = idx
     #f.close()
     return examples
 
