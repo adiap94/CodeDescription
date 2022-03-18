@@ -207,7 +207,7 @@ def get_random_token_replacement(inputs, vocab, indices, replace_tokens, distinc
 
         d = {}
         for repl_tok in replace_tokens:
-            repl_tok_idx = input_vocab.stoi[repl_tok]
+            repl_tok_idx = vocab.stoi[repl_tok]
             if repl_tok_idx not in inp:
                 continue
 
@@ -248,7 +248,7 @@ def apply_random_attack(data, model, input_vocab, replace_tokens, field_name, op
     return d
 
 
-if __name__ == "__main__":
+def main():
     opt = parse_args()
     print(opt)
 
@@ -258,12 +258,11 @@ if __name__ == "__main__":
     model_type = 'roberta'
     MODEL_CLASSES = {'roberta': (RobertaConfig, RobertaModel, RobertaTokenizer)}
 
-
     # budild model
 
     config_class, model_class, tokenizer_class = MODEL_CLASSES[model_type]
-    config = config_class.from_pretrained( model_name_or_path)
-    tokenizer = tokenizer_class.from_pretrained(model_name_or_path,do_lower_case=True)
+    config = config_class.from_pretrained(model_name_or_path)
+    tokenizer = tokenizer_class.from_pretrained(model_name_or_path, do_lower_case=True)
     encoder = model_class.from_pretrained(model_name_or_path, config=config)
     decoder_layer = nn.TransformerDecoderLayer(d_model=config.hidden_size, nhead=config.num_attention_heads)
     decoder = nn.TransformerDecoder(decoder_layer, num_layers=6)
@@ -306,8 +305,8 @@ if __name__ == "__main__":
     save_path = save_path + '-random.json'
     json.dump(rand_d, open(save_path, 'w'), indent=4)
     print('  + Saved:', save_path)
+    return save_path
 
 
-
-
-
+if __name__ == "__main__":
+    main()

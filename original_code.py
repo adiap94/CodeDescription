@@ -359,7 +359,7 @@ def main():
         else:
             train_sampler = DistributedSampler(train_data)
         train_dataloader = DataLoader(train_data, sampler=train_sampler,
-                                      batch_size=args.train_batch_size // args.gradient_accumulation_steps,num_workers=5,worker_init_fn=worker_init_fn)
+                                      batch_size=args.train_batch_size // args.gradient_accumulation_steps)
 
         num_train_optimization_steps = args.train_steps
 
@@ -434,7 +434,7 @@ def main():
                     # eval_data['start'] = 0
                     # eval_data['end'] = len(eval_examples)
                 eval_sampler = SequentialSampler(eval_data)
-                eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=args.eval_batch_size,num_workers=5,worker_init_fn=worker_init_fn)
+                eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=args.eval_batch_size)
 
                 logger.info("\n***** Running evaluation *****")
                 logger.info("  Num examples = %d", len(eval_examples))
@@ -503,7 +503,7 @@ def main():
                     # eval_data['end'] = len(eval_examples)
 
                 eval_sampler = SequentialSampler(eval_data)
-                eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=args.eval_batch_size,num_workers=5,worker_init_fn=worker_init_fn)
+                eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=args.eval_batch_size)
 
                 model.eval()
                 p = []

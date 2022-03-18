@@ -479,7 +479,7 @@ def main(data_path):
                 fout.write('{}\n'.format(code))
 
     print("  + Transforms complete!")
-    final_outputdir = os.path.join(data_path, "adv", 'adv_' +time_str)
+    final_outputdir = os.path.join(data_path, "adv", 'adv_' +time_str +'/')
     return final_outputdir
 
 if __name__ == "__main__":

@@ -119,7 +119,7 @@ def main(data_path):
     targets = []
     outMap = {}
     Language.build_library('build/py-tree-sitter-languages.so', ['tree-sitter-python'])
-    splits = ['train','valid']
+    splits = ['test','train','valid']
     TRANSFORMS = ['transforms.Identity','transforms.RenameParameters','transforms.RenameLocalVariables', 'transforms.RenameFields', 'transforms.AddDeadCode']
     for t_name in TRANSFORMS:
 

@@ -75,7 +75,7 @@ def main(data_path):
         loc = os.path.join(data_path, t_name)
         tasks = []
 
-        for split in ["train","valid"]:
+        for split in ["test","train","valid"]:
             if not os.path.isfile(os.path.join(loc + '/masked_'+split+'.jsonl.gz')):
                 continue
             if split == 'baseline':

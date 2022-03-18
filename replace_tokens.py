@@ -13,36 +13,42 @@ def parse_args():
     return opt
 
 
-opt = parse_args()
+def main():
 
-mapping = json.load(open(opt.mapping_json))
+    opt = parse_args()
 
-data = pd.read_csv(opt.source_data_path, sep='\t', index_col=0)
+    mapping = json.load(open(opt.mapping_json))
 
-with open(opt.source_data_path, 'r') as in_f:
-    with open(opt.dest_data_path, 'w') as dst_f:
-        colnames = None
-        for line in tqdm.tqdm(in_f):
-            if colnames is None:
-                colnames = line.strip().split('\t')
-                dst_f.write('\t'.join(colnames[1:]) + '\n')
-                continue
+    data = pd.read_csv(opt.source_data_path, sep='\t', index_col=0)
 
-            parts = line.strip().split('\t')
-            index = parts[0]
-            rest = [(colnames[i + 4], parts[i + 4]) for i in range(len(parts) - 5)]
-
-            new_parts = []
-            for i, sample in enumerate(parts[1:]):
-                col = i + 1
-                new_part = sample
-                if colnames[col] == 'src' or colnames[col] == 'tgt' or colnames[col] == 'transforms.Identity' or colnames[col] == 'filename':
-                    new_parts.append(new_part)
+    with open(opt.source_data_path, 'r') as in_f:
+        with open(opt.dest_data_path, 'w') as dst_f:
+            colnames = None
+            for line in tqdm.tqdm(in_f):
+                if colnames is None:
+                    colnames = line.strip().split('\t')
+                    dst_f.write('\t'.join(colnames[1:]) + '\n')
                     continue
-                if index not in mapping[colnames[col]]:
+
+                parts = line.strip().split('\t')
+                index = parts[0]
+                rest = [(colnames[i + 4], parts[i + 4]) for i in range(len(parts) - 5)]
+
+                new_parts = []
+                for i, sample in enumerate(parts[1:]):
+                    col = i + 1
+                    new_part = sample
+                    if colnames[col] == 'src' or colnames[col] == 'tgt' or colnames[col] == 'transforms.Identity' or colnames[col] == 'filename':
+                        new_parts.append(new_part)
+                        continue
+                    if index not in mapping[colnames[col]]:
+                        new_parts.append(new_part)
+                        continue
+                    for repl_tok in mapping[colnames[col]][index]:
+                        new_part = new_part.replace(repl_tok, mapping[colnames[col]][index][repl_tok])
                     new_parts.append(new_part)
-                    continue
-                for repl_tok in mapping[colnames[col]][index]:
-                    new_part = new_part.replace(repl_tok, mapping[colnames[col]][index][repl_tok])
-                new_parts.append(new_part)
-            dst_f.write('\t'.join(new_parts) + '\n')
+                dst_f.write('\t'.join(new_parts) + '\n')
+
+
+if __name__ == "__main__":
+    main()

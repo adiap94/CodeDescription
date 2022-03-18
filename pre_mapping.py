@@ -74,8 +74,12 @@ def main(data_path):
                 out_f.write('{}\t{}\t{}\n'.format(index, key,'\t'.join(row)))
                 index += 1
         print("  + Adversarial {}ing file generation complete!".format(split))
+    dict_of_Adv_tsvpath = {}
+    for split in splits:
+        dict_of_Adv_tsvpath[split] = os.path.join(data_path,"adv_"+split+".tsv")
 
+    return dict_of_Adv_tsvpath
 
 if __name__ == "__main__":
-    data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220317-230340/'
+    data_path =  '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220318-215953/'
     main(data_path)

@@ -37,12 +37,12 @@ def alignAugmentData2Source(tsv_path,source_path,out_dir=None):
 
     # init
     d_aug = {}
+    print ("Creating ADV json file foe each transformation")
     for aug in augmentation_type_list:
         d_aug[aug] = []
     counter = 0
     # alignment
     for index,row in df.iterrows():
-        print("| python_id_number is : " +  str(row.number))
         source_info = df_source.loc[row.number]
         try:
             if not row.tgt.split(" ")[0].lower() in source_info.func_name.lower():
@@ -51,6 +51,8 @@ def alignAugmentData2Source(tsv_path,source_path,out_dir=None):
             print("could not check sanity check")
         for aug_type in augmentation_type_list:
             d = {}
+            if row['src'] == row[aug_type]:
+                continue
             code_str = "def "+ str(source_info.func_name) +" "+ str(row[aug_type])
             code_tokens=code_str.split(" ")
 
@@ -63,6 +65,7 @@ def alignAugmentData2Source(tsv_path,source_path,out_dir=None):
             # save to jsonl
             d_aug[aug_type].append(d)
 
+    print("Saving JSONL files ")
     for key, value in d_aug.items():
         out_file = os.path.join(out_dir,"test_"+key+".jsonl")
         # with open(out_file, 'w') as outfile:
@@ -71,13 +74,13 @@ def alignAugmentData2Source(tsv_path,source_path,out_dir=None):
             for entry in value:
                 json.dump(entry, outfile)
                 outfile.write('\n')
-
+    print ("Finished")
 
 
 
 if __name__ == "__main__":
-    file_path ="/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220317-230340/final_train.tsv"
+    file_path ="/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220318-215953/final_train.tsv"
     source_path = "/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/train.jsonl"
-    out_dir = "/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220317-230340/data_jsonl/train"
+    out_dir = "/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220318-215953/data_jsonl/train_new"
     alignAugmentData2Source(file_path,source_path,out_dir)
     pass
