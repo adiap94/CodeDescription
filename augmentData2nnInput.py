@@ -26,6 +26,7 @@ def alignAugmentData2Source(tsv_path,source_path,Identity_dir,out_dir=None):
 
     # augmentation
     df = pd.read_csv(tsv_path, sep='\t')
+    df["number"] = df["filename"].apply(lambda x: int(x.split(".")[0]))
     augmentation_type_list = df.columns.drop(["filename","src","tgt"])
 
     # init
@@ -35,52 +36,21 @@ def alignAugmentData2Source(tsv_path,source_path,Identity_dir,out_dir=None):
     counter = 0
     # alignment
     for index,row in df.iterrows():
-        print(index)
-        with open(os.path.join(Identity_dir, row.filename), 'r') as f:
-            lines = f.readlines()
-            first_line = lines[0].split("(")[0]
-        source_info = df_source[df_source.code.str.contains(first_line, regex=False)]
-        if len(source_info)== 0:
-            continue
-        elif len(source_info) ==1:
-            source_info = source_info.reset_index().iloc[0]
-        elif len(source_info)> 1:
-            # counter = counter + 1
-            for index_info, row_info in source_info.iterrows():
-                str_jsonl = ''.join(row_info.code).replace(' ', '')
-                flag = 1
-                for line in lines[1:]:
-                    if not flag:
-                        break
-                    if line == '\n' or line == " " or line == "\t":
-                        continue
-                    line_str =''.join(line).replace('\n', '')
-                    line_str = ''.join(line_str).replace(' ', '')
-
-                    if not line_str in str_jsonl:
-                        flag = 0
-                        break
-                if flag:
-                    # print(counter)
-                    print("tsv:" +  row.src)
-                    print("source:" + row_info.code)
-                    source_info = source_info.loc[index_info]
-                    break
-
-
-
+        source_info = df_source.loc[row.number]
+        if not row.tgt.split(" ")[0].lower() in source_info.func_name.lower():
+            print("there is problem in index " + str(row.number))
 
 
         for aug_type in augmentation_type_list:
             d = {}
-            code_str = first_line +" "+ row[aug_type]
+            code_str = "def "+ source_info.func_name +" "+ row[aug_type]
             code_tokens=code_str.split(" ")
 
-            d["func_name"] = source_info["func_name"]
+            d["func_name"] = source_info.func_name
             d["code"] = code_str
             d['code_tokens'] = code_tokens
-            d["docstring"] = source_info["docstring"]
-            d["docstring_tokens"] = source_info["docstring_tokens"]
+            d["docstring"] = source_info.docstring
+            d["docstring_tokens"] = source_info.docstring_tokens
 
             # save to jsonl
             d_aug[aug_type].append(d)
@@ -91,7 +61,7 @@ def alignAugmentData2Source(tsv_path,source_path,Identity_dir,out_dir=None):
             json.dump(value, outfile)
 
 
-    pass
+
 
 
 if __name__ == "__main__":
