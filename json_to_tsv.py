@@ -64,18 +64,18 @@ def process(item):
     )
 
 
-if __name__ == "__main__":
+def main(data_path):
     print("Loading inputs...")
 
     has_baselines = False
-    data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220317-230340/'
+
     TRANSFORMS = ['transforms.Identity', 'transforms.RenameParameters','transforms.RenameLocalVariables', 'transforms.RenameFields', 'transforms.AddDeadCode']
     pool = multiprocessing.Pool()
     for t_name in TRANSFORMS:
         loc = os.path.join(data_path, t_name)
         tasks = []
 
-        for split in ["test"]:
+        for split in ["train","valid"]:
             if not os.path.isfile(os.path.join(loc + '/masked_'+split+'.jsonl.gz')):
                 continue
             if split == 'baseline':
@@ -88,14 +88,14 @@ if __name__ == "__main__":
 
         print("  + Inputs loaded")
 
+        out_map = {
+            'train': open(os.path.join(loc , 'masked_token_train.tsv'), 'w'),
+            'valid': open(os.path.join(loc , 'masked_token_valid.tsv'), 'w'),
+            'test': open(os.path.join(loc, 'masked_token_test.tsv'), 'w'),
+        }
         # out_map = {
         #     'test': open(os.path.join(loc , 'masked_token_test.tsv'), 'w'),
-        #     'train': open(os.path.join(loc , 'masked_token_train.tsv'), 'w'),
-        #     'valid': open(os.path.join(loc , 'masked_token_valid.tsv'), 'w')
         # }
-        out_map = {
-            'test': open(os.path.join(loc , 'masked_token_test.tsv'), 'w'),
-        }
 
 
         if has_baselines:
@@ -106,8 +106,8 @@ if __name__ == "__main__":
         print("  + Output files opened")
 
         out_map['test'].write('from_file\tsrc\ttgt\n')
-        # out_map['train'].write('from_file\tsrc\ttgt\n')
-        # out_map['valid'].write('from_file\tsrc\ttgt\n')
+        out_map['train'].write('from_file\tsrc\ttgt\n')
+        out_map['valid'].write('from_file\tsrc\ttgt\n')
 
         print("  - Processing in parallel...")
         iterator = tqdm.tqdm(
@@ -123,3 +123,7 @@ if __name__ == "__main__":
             )
         print("    + Tokenizing complete")
         print("  + Done extracting tokens")
+
+if __name__ == "__main__":
+    data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220317-230340/'
+    main(data_path)

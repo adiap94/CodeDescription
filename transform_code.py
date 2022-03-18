@@ -378,7 +378,7 @@ def t_add_dead_code(the_ast, uid=1):
 
 
 def process(item):
-    (split, the_hash, og_code) = item
+    (split, the_hash, og_code,og_ind) = item
 
     transforms = [
         (
@@ -400,11 +400,11 @@ def process(item):
             changed, result = t_func(
                 ast.parse(og_code)
             )
-            results.append((changed, split, t_name, the_hash, astor.to_source(result)))
+            results.append((changed, split, t_name, the_hash, astor.to_source(result),og_ind))
         except Exception as ex:
             import traceback
             traceback.print_exc()
-            results.append((False, split, t_name, the_hash, og_code))
+            results.append((False, split, t_name, the_hash, og_code,og_ind))
     return results
 
 
@@ -437,24 +437,25 @@ def remove_comment(code_string):
         return code_string_original
 
 
-if __name__ == "__main__":
+def main(data_path):
     time_str = time.strftime("%Y%m%d-%H%M%S")
     print("Starting transform:")
 
-    data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/'
+
 
     tasks = []
     pool = multiprocessing.Pool(1)
 
     print("  + Loading tasks...")
     splits =['test', 'train', 'valid']
+    #splits = ['test']
     for split in splits:
         for idx, line in enumerate(open(data_path + '{}.jsonl'.format(split))):
             # line = line.strip()
             as_json = json.loads(line)
             code = as_json['code']
             code = remove_comment(code_string=code)
-            tasks.append((split, as_json['sha'], code))
+            tasks.append((split, as_json['sha'], code,idx))
 
     results = pool.imap_unordered(process, tasks, 4000)
     print("    + Loaded {} transform tasks".format(len(tasks)))
@@ -464,7 +465,7 @@ if __name__ == "__main__":
     names_covered = []
     for idx, single_result in enumerate(
             tqdm(results, desc="    + Progress", total=len(tasks))):
-        for changed, split, t_name, the_hash, code in single_result:
+        for changed, split, t_name, the_hash, code, og_index in single_result:
             if not changed:
                 continue
             out_dir_path = os.path.join(data_path, "adv", 'adv_' + time_str, t_name, split)
@@ -473,8 +474,16 @@ if __name__ == "__main__":
                 os.makedirs(out_dir_path, exist_ok=True)
                 os.chmod(out_dir_path, mode=0o777)
 
-            file_path = os.path.join(out_dir_path, str(idx) + ".py")
+            file_path = os.path.join(out_dir_path, str(og_index) + ".py")
             with open(file_path, 'w') as fout:
                 fout.write('{}\n'.format(code))
 
     print("  + Transforms complete!")
+    final_outputdir = os.path.join(data_path, "adv", 'adv_' +time_str)
+    return final_outputdir
+
+if __name__ == "__main__":
+
+    data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/'
+
+    main(data_path)

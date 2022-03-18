@@ -111,7 +111,7 @@ def process(target):
     return True, results
 
 
-if __name__ == '__main__':
+def main(data_path):
     resource.setrlimit(resource.RLIMIT_STACK, (2**29,-1))
     sys.setrecursionlimit(10**6)
 
@@ -119,8 +119,7 @@ if __name__ == '__main__':
     targets = []
     outMap = {}
     Language.build_library('build/py-tree-sitter-languages.so', ['tree-sitter-python'])
-    data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220317-230340/'
-    splits = ['test']
+    splits = ['train','valid']
     TRANSFORMS = ['transforms.Identity','transforms.RenameParameters','transforms.RenameLocalVariables', 'transforms.RenameFields', 'transforms.AddDeadCode']
     for t_name in TRANSFORMS:
 
@@ -162,3 +161,7 @@ if __name__ == '__main__':
     print("    - Rejected {} files for parse failure".format(total - accepts), file=sys.stderr)
     print("    - Rejected {} files for regex mismatch".format(mismatches), file=sys.stderr)
     print("    + Finished. {} functions extraced".format(func_count), file=sys.stderr)
+
+if __name__ == "__main__":
+    data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220317-230340/'
+    main(data_path)

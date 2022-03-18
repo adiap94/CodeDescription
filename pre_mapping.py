@@ -17,16 +17,16 @@ def handle_replacement_tokens(line):
     return new_line
 
 
-if __name__ == "__main__":
+def main(data_path):
     csv.field_size_limit(sys.maxsize)
 
-    data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220317-230340'
+    #data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220317-230340'
 
 
     TRANSFORMS = ['transforms.RenameParameters','transforms.RenameLocalVariables', 'transforms.RenameFields', 'transforms.AddDeadCode']
 
-    # splits = ['test', 'train', 'valid']
-    splits = ['test']
+    splits = [ 'test','train', 'valid']
+    #splits = ['test']
     for split in splits:
         print("Loading identity transform...")
         ID_MAP = {}
@@ -74,3 +74,8 @@ if __name__ == "__main__":
                 out_f.write('{}\t{}\t{}\n'.format(index, key,'\t'.join(row)))
                 index += 1
         print("  + Adversarial {}ing file generation complete!".format(split))
+
+
+if __name__ == "__main__":
+    data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220317-230340/'
+    main(data_path)
