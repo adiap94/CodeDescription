@@ -20,7 +20,7 @@ def handle_replacement_tokens(line):
 if __name__ == "__main__":
     csv.field_size_limit(sys.maxsize)
 
-    data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220317-143412'
+    data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220317-230340'
 
 
     TRANSFORMS = ['transforms.RenameParameters','transforms.RenameLocalVariables', 'transforms.RenameFields', 'transforms.AddDeadCode']
@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
         print("Writing adv. {}ing samples...".format(split))
         with open(os.path.join(data_path,"adv_"+split+".tsv"), "w") as out_f:
-            out_f.write('index\tsrc\ttgt\t{}\n'.format(
+            out_f.write('index\tfilename\tsrc\ttgt\t{}\n'.format(
                 '\t'.join([
                     '{}'.format(i) for i in TRANSFORMS
                 ])
@@ -71,6 +71,6 @@ if __name__ == "__main__":
                         row.append(TRANSFORMED[transform_name][key])
                     else:
                         row.append(ID_MAP[key][0])
-                out_f.write('{}\t{}\n'.format(index, '\t'.join(row)))
+                out_f.write('{}\t{}\t{}\n'.format(index, key,'\t'.join(row)))
                 index += 1
         print("  + Adversarial {}ing file generation complete!".format(split))

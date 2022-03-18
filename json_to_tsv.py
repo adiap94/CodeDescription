@@ -68,8 +68,9 @@ if __name__ == "__main__":
     print("Loading inputs...")
 
     has_baselines = False
-    data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220317-143412/'
+    data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220317-230340/'
     TRANSFORMS = ['transforms.Identity', 'transforms.RenameParameters','transforms.RenameLocalVariables', 'transforms.RenameFields', 'transforms.AddDeadCode']
+    pool = multiprocessing.Pool()
     for t_name in TRANSFORMS:
         loc = os.path.join(data_path, t_name)
         tasks = []
@@ -84,7 +85,7 @@ if __name__ == "__main__":
                 from_file = as_json['from_file'] if 'from_file' in as_json else '{}.java'.format(as_json['sha256_hash'])
                 tasks.append((split, from_file, as_json['source_tokens'], as_json['target_tokens']))
 
-        pool = multiprocessing.Pool()
+
         print("  + Inputs loaded")
 
         # out_map = {

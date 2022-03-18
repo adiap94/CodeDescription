@@ -444,7 +444,7 @@ if __name__ == "__main__":
     data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/'
 
     tasks = []
-    pool = multiprocessing.Pool()
+    pool = multiprocessing.Pool(1)
 
     print("  + Loading tasks...")
     splits =['test', 'train', 'valid']

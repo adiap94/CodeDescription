@@ -119,7 +119,7 @@ if __name__ == '__main__':
     targets = []
     outMap = {}
     Language.build_library('build/py-tree-sitter-languages.so', ['tree-sitter-python'])
-    data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220317-143412/'
+    data_path = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220317-230340/'
     splits = ['test']
     TRANSFORMS = ['transforms.Identity','transforms.RenameParameters','transforms.RenameLocalVariables', 'transforms.RenameFields', 'transforms.AddDeadCode']
     for t_name in TRANSFORMS:
@@ -142,23 +142,23 @@ if __name__ == '__main__':
                         'from_file': the_file
                     })
 
-        results = pool.imap_unordered(process, targets, 2000)
+    results = pool.imap_unordered(process, targets, 2000)
 
-        accepts = 0
-        total = 0
-        func_count = 0
-        mismatches = 0
-        for status, functions in tqdm(results, total=len(targets), desc="  + Normalizing"):
-            total += 1
-            if status:
-                accepts += 1
-            for result in functions:
-                func_count += 1
-                outMap[result['split']].write(
-                    (json.dumps(result) + '\n').encode()
-                )
+    accepts = 0
+    total = 0
+    func_count = 0
+    mismatches = 0
+    for status, functions in tqdm(results, total=len(targets), desc="  + Normalizing"):
+        total += 1
+        if status:
+            accepts += 1
+        for result in functions:
+            func_count += 1
+            outMap[result['split']].write(
+                (json.dumps(result) + '\n').encode()
+            )
 
-        print("    - Parse success rate {:.2%}% ".format(float(accepts) / float(total)), file=sys.stderr)
-        print("    - Rejected {} files for parse failure".format(total - accepts), file=sys.stderr)
-        print("    - Rejected {} files for regex mismatch".format(mismatches), file=sys.stderr)
-        print("    + Finished. {} functions extraced".format(func_count), file=sys.stderr)
+    print("    - Parse success rate {:.2%}% ".format(float(accepts) / float(total)), file=sys.stderr)
+    print("    - Rejected {} files for parse failure".format(total - accepts), file=sys.stderr)
+    print("    - Rejected {} files for regex mismatch".format(mismatches), file=sys.stderr)
+    print("    + Finished. {} functions extraced".format(func_count), file=sys.stderr)

@@ -33,7 +33,7 @@ def parse_args():
     # parser.add_argument('--expt_dir', action='store', dest='expt_dir', required=True,
     #                     help='Path to experiment directory. If load_checkpoint is True, then path to checkpoint directory has to be provided')
     parser.add_argument('--load_checkpoint', action='store', dest='load_checkpoint', default='Best_F1')
-    parser.add_argument('--num_replacements', default=50)
+    parser.add_argument('--num_replacements', default=50, type=int)
     parser.add_argument('--distinct', action='store_true', dest='distinct', default=True)
     parser.add_argument('--no-distinct', action='store_false', dest='distinct')
     parser.add_argument('--no_gradient', action='store_true', dest='no_gradient', default=False)
@@ -109,16 +109,17 @@ def load_data(data_path,
                       SourceField(),
                       TargetField(),
                       SourceField(),
-                      torchtext.data.Field(sequential=False, use_vocab=False)
+                      torchtext.data.Field(sequential=False, use_vocab=False),
+                      SourceField()
               ),
               filter_func=lambda x: True
               ):
-    src, tgt, src_adv, idx_field = fields
+    src, tgt, src_adv, idx_field, filename_field = fields
 
     fields_inp = []
     with open(data_path, 'r') as f:
         first_line = f.readline()
-        cols = first_line[:-1].split('\t')
+        cols = first_line.replace('\n', '').split('\t')
         for col in cols:
             if col == 'src':
                 fields_inp.append(('src', src))
@@ -126,6 +127,8 @@ def load_data(data_path,
                 fields_inp.append(('tgt', tgt))
             elif col == 'index':
                 fields_inp.append(('index', idx_field))
+            elif col == 'filename':
+                fields_inp.append(('filename', filename_field))
             else:
                 fields_inp.append((col, src_adv))
 
@@ -138,7 +141,7 @@ def load_data(data_path,
         filter_pred=filter_func
     )
 
-    return data, fields_inp, src, tgt, src_adv, idx_field
+    return data, fields_inp, src, tgt, src_adv, idx_field, filename_field
 
 
 def get_best_token_replacement(inputs, grads, vocab, indices, replace_tokens, distinct):
@@ -275,9 +278,10 @@ if __name__ == "__main__":
     output_vocab = tokenizer.decoder
     model.half()
 
-    data, fields_inp, src, tgt, src_adv, idx_field = load_data(opt.data_path)
+    data, fields_inp, src, tgt, src_adv, idx_field, filename_field = load_data(opt.data_path)
     src.build_vocab(data)
     tgt.build_vocab(data)
+    filename_field.build_vocab(data)
     input_vocab = src.vocab
     output_vocab = tgt.vocab
     src_adv.vocab = input_vocab
@@ -287,7 +291,7 @@ if __name__ == "__main__":
     rand_d = {}
 
     for field_name, _ in fields_inp:
-        if field_name in ['src', 'tgt', 'index', 'transforms.Identity']:
+        if field_name in ['src', 'tgt', 'index', 'transforms.Identity', 'filename']:
             continue
 
         print('Random Attack', field_name)
