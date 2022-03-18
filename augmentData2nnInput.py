@@ -32,6 +32,7 @@ def alignAugmentData2Source(tsv_path,source_path,out_dir=None):
     # augmentation
     df = pd.read_csv(tsv_path, sep='\t')
     df["number"] = df["filename"].apply(lambda x: int(x.split(".")[0]))
+    df["number"] = df["number"]-df["number"].min()
     augmentation_type_list = df.columns.drop(["filename","src","tgt","number"])
 
     # init
@@ -43,10 +44,11 @@ def alignAugmentData2Source(tsv_path,source_path,out_dir=None):
     for index,row in df.iterrows():
         print("| python_id_number is : " +  str(row.number))
         source_info = df_source.loc[row.number]
-        if not row.tgt.split(" ")[0].lower() in source_info.func_name.lower():
-            print("there is problem in index " + str(row.number))
-
-
+        try:
+            if not row.tgt.split(" ")[0].lower() in source_info.func_name.lower():
+                print("there is problem in index " + str(row.number))
+        except:
+            print("could not check sanity check")
         for aug_type in augmentation_type_list:
             d = {}
             code_str = "def "+ str(source_info.func_name) +" "+ str(row[aug_type])
@@ -74,8 +76,8 @@ def alignAugmentData2Source(tsv_path,source_path,out_dir=None):
 
 
 if __name__ == "__main__":
-    file_path ="/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220317-230340/final_test.tsv"
-    source_path = "/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/test.jsonl"
-    out_dir = "/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220317-230340/data_jsonl/test"
+    file_path ="/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220317-230340/final_train.tsv"
+    source_path = "/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/train.jsonl"
+    out_dir = "/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220317-230340/data_jsonl/train"
     alignAugmentData2Source(file_path,source_path,out_dir)
     pass
