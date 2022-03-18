@@ -35,16 +35,16 @@ def alignAugmentData2Source(tsv_path,source_path,Identity_dir,out_dir=None):
     counter = 0
     # alignment
     for index,row in df.iterrows():
-
+        print(index)
         with open(os.path.join(Identity_dir, row.filename), 'r') as f:
             lines = f.readlines()
             first_line = lines[0].split("(")[0]
         source_info = df_source[df_source.code.str.contains(first_line, regex=False)]
         if len(source_info)== 0:
             continue
-        if len(source_info) ==1:
+        elif len(source_info) ==1:
             source_info = source_info.reset_index().iloc[0]
-        if len(source_info)> 1:
+        elif len(source_info)> 1:
             counter = counter + 1
             for line in lines[1:4]:
                 if line == '\n' or line == " " or line == "\t":
@@ -54,11 +54,13 @@ def alignAugmentData2Source(tsv_path,source_path,Identity_dir,out_dir=None):
 
                 for index_info, row_info in source_info.iterrows():
                     str_jsonl = ''.join(row_info.code).replace(' ', '')
-                if line_str in str_jsonl:
-                    source_info = source_info.loc[index_info]
-                    print(counter)
-                    print("tsv:" +  row.src)
-                    print("source:" + row_info.code)
+                    if line_str in str_jsonl:
+
+                        print(counter)
+                        print("tsv:" +  row.src)
+                        print("source:" + row_info.code)
+                        source_info = source_info.loc[index_info]
+                        break
 
 
 
