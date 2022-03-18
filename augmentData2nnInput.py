@@ -45,22 +45,28 @@ def alignAugmentData2Source(tsv_path,source_path,Identity_dir,out_dir=None):
         elif len(source_info) ==1:
             source_info = source_info.reset_index().iloc[0]
         elif len(source_info)> 1:
-            counter = counter + 1
-            for line in lines[1:4]:
-                if line == '\n' or line == " " or line == "\t":
-                    continue
-                line_str =''.join(line).replace('\n', '')
-                line_str = ''.join(line_str).replace(' ', '')
-
-                for index_info, row_info in source_info.iterrows():
-                    str_jsonl = ''.join(row_info.code).replace(' ', '')
-                    if line_str in str_jsonl:
-
-                        print(counter)
-                        print("tsv:" +  row.src)
-                        print("source:" + row_info.code)
-                        source_info = source_info.loc[index_info]
+            # counter = counter + 1
+            for index_info, row_info in source_info.iterrows():
+                str_jsonl = ''.join(row_info.code).replace(' ', '')
+                flag = 1
+                for line in lines[1:]:
+                    if not flag:
                         break
+                    if line == '\n' or line == " " or line == "\t":
+                        continue
+                    line_str =''.join(line).replace('\n', '')
+                    line_str = ''.join(line_str).replace(' ', '')
+
+                    if not line_str in str_jsonl:
+                        flag = 0
+                        break
+                if flag:
+                    # print(counter)
+                    print("tsv:" +  row.src)
+                    print("source:" + row_info.code)
+                    source_info = source_info.loc[index_info]
+                    break
+
 
 
 
