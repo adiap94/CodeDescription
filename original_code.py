@@ -69,9 +69,11 @@ class Example(object):
 
 def read_examples(filename, eval = False):
     """Read examples from filename."""
-    if len(filename.split(",")) > 1:
-        filename = filename.split(",")
-
+    filename = filename.split(",")
+    # if len(filename.split(",")) > 1:
+    #     filename = filename.split(",")
+    # else:
+    #     filename =[filename]
     examples = []
     ref_idx = 0
     for filename_path in filename:
@@ -552,6 +554,7 @@ def main():
                     torch.save(model_to_save.state_dict(), output_model_file)
 
     if args.do_test:
+        args.output_dir = os.path.dirname(os.path.dirname(args.load_model_path))
         utiles_codebert.save_params(args=args, out_dir=args.output_dir, str="test")
         files = []
         if args.dev_filename is not None:
