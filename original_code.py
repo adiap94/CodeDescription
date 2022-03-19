@@ -25,8 +25,6 @@ import sys
 import bleu
 import pickle
 import torch
-import torch.multiprocessing
-torch.multiprocessing.set_sharing_strategy('file_system')
 import json
 import random
 import logging
