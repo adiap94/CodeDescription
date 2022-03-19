@@ -79,8 +79,8 @@ def alignAugmentData2Source(tsv_path,source_path,out_dir=None):
 
 
 if __name__ == "__main__":
-    file_path ="/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220318-215953/final_train.tsv"
-    source_path = "/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/train.jsonl"
-    out_dir = "/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220318-215953/data_jsonl/train_new"
+    file_path ="/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220318-215953/final_test.tsv"
+    source_path = "/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/test.jsonl"
+    out_dir = "/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/adv/adv_20220318-215953/data_jsonl/test_new"
     alignAugmentData2Source(file_path,source_path,out_dir)
     pass
