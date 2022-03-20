@@ -37,12 +37,14 @@ def main(path_to_data,path_to_model):
         mapping_path[split] = os.path.join(dir_with_codes_transforms, split + "_mapping")
         print('create mapping in ' + mapping_path[split])
         sys.argv = ['create_replace_mapping.py', '--data_path', dict_of_Adv_tsvpath[split],
-                    '--save_path', mapping_path[split], '--batch_size', '30', '--num_replacements', '1']
+                    '--save_path', mapping_path[split], '--batch_size', '30', '--num_replacements', '1',
+                    '--load_model_path',path_to_model]
         mapping_path[split] = create_replace_mapping.main()
         print('finished creating mapping in ' + mapping_path[split])
         print("Running replace_tokens script for " + split + " dataset")
         sys.argv = ['replace_tokens.py', '--source_data_path', dict_of_Adv_tsvpath[split],
-                    '--dest_data_path', os.path.join(dir_with_codes_transforms, 'final_' + split + '.tsv'), '--mapping_json', mapping_path[split]]
+                    '--dest_data_path', os.path.join(dir_with_codes_transforms, 'final_' + split + '.tsv'),
+                    '--mapping_json', mapping_path[split]]
         replace_tokens.main()
         print("Finished replace_tokens script run for " + split + " dataset")
 

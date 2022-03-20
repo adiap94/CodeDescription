@@ -40,8 +40,9 @@ def parse_args():
     parser.add_argument('--batch_size', type=int, default=16)
     parser.add_argument('--save_path', default=None)
     parser.add_argument('--random', action='store_true', default=False, help='Also generate random attack')
-    opt = parser.parse_args('--load_model', action='store', dest='model_path', default='Best_F1')
-    parser.add_argument()
+    parser.add_argument('--load_model_path', action='store', dest='load_model_path', default="/tcmldrive/project/results/python/20220314-163735/checkpoint-best-bleu/pytorch_model.bin")
+    opt = parser.parse_args()
+
 
 
     return opt
@@ -271,7 +272,7 @@ def main():
     model = Seq2Seq(encoder=encoder, decoder=decoder, config=config,
                     beam_size=10, max_length=128,
                     sos_id=tokenizer.cls_token_id, eos_id=tokenizer.sep_token_id)
-    load_model_path = "/tcmldrive/project/results/python/20220314-163735/checkpoint-best-bleu/pytorch_model.bin"
+    load_model_path = opt.load_model_path
     print("reload model from {}".format(load_model_path))
     model.load_state_dict(torch.load(load_model_path))
     # model, input_vocab, output_vocab = load_model(opt.expt_dir, opt.load_checkpoint)
