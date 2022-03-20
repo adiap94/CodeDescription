@@ -40,7 +40,9 @@ def parse_args():
     parser.add_argument('--batch_size', type=int, default=16)
     parser.add_argument('--save_path', default=None)
     parser.add_argument('--random', action='store_true', default=False, help='Also generate random attack')
-    opt = parser.parse_args()
+    opt = parser.parse_args('--load_model', action='store', dest='model_path', default='Best_F1')
+    parser.add_argument()
+
 
     return opt
 
