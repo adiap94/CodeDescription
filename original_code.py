@@ -601,7 +601,7 @@ def main():
             dev_bleu = round(bleu.bleuFromMaps(goldMap, predictionMap)[0], 2)
             logger.info("  %s = %s " % ("bleu-4", str(dev_bleu)))
             logger.info("  " + "*" * 20)
-            test_bleu_value['train_loss'] = round(dev_bleu, 5)
+            test_bleu_value['Final BLEU'] = round(dev_bleu, 5)
             writeCSVLoggerFile(csvLoggerFile_Blue_test_score_path, test_bleu_value)
 
 
