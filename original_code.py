@@ -299,6 +299,7 @@ def main():
 
     training_log = {}
     bleu_log = {}
+    test_bleu_value = {}
     if args.do_train:
         if DEBUG_MODE:
             args.output_dir = os.path.join(args.output_dir,"debug", time_str)
@@ -552,6 +553,8 @@ def main():
     if args.do_test:
         utiles_codebert.save_params(args=args, out_dir=args.output_dir, str="test")
         files = []
+        csvLoggerFile_Blue_test_score_path = os.path.join(args.output_dir, "BleuTestScore.csv")
+
         if args.dev_filename is not None:
             files.append(args.dev_filename)
         if args.test_filename is not None:
@@ -598,6 +601,8 @@ def main():
             dev_bleu = round(bleu.bleuFromMaps(goldMap, predictionMap)[0], 2)
             logger.info("  %s = %s " % ("bleu-4", str(dev_bleu)))
             logger.info("  " + "*" * 20)
+            test_bleu_value['train_loss'] = round(dev_bleu, 5)
+            writeCSVLoggerFile(csvLoggerFile_Blue_test_score_path, test_bleu_value)
 
 
 if __name__ == "__main__":
