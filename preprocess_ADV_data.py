@@ -1,23 +1,5 @@
 import os
-import io
 import sys
-import ast
-import json
-import gzip
-import copy
-import tqdm
-import astor
-import random
-import itertools
-import multiprocessing
-import re
-import resource
-import hashlib
-import time
-from tqdm import tqdm
-from yapf.yapflib.yapf_api import FormatCode
-from os import listdir
-from os.path import isfile, join
 import transform_code
 import transformed_to_json
 import json_to_tsv
@@ -26,9 +8,9 @@ import create_replace_mapping
 import replace_tokens
 import augmentData2nnInput
 
-if __name__ == "__main__":
+def main(path_to_data,path_to_model):
     splits = ["test","train","valid"]
-    path_to_data = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/'
+    # path_to_data = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/'
     #Preproccesing and check it can add transformation to the code string to code
     print("Running transform_code script "  )
     dir_with_codes_transforms = transform_code.main(path_to_data)
@@ -48,7 +30,7 @@ if __name__ == "__main__":
     print('saved the following files in pre mapping:')
     print(dict_of_Adv_tsvpath)
     print("Finished pre_mapping script run ")
-    path_to_model = "/tcmldrive/project/results/python/20220314-163735/checkpoint-best-bleu/pytorch_model.bin"
+    # path_to_model = "/tcmldrive/project/results/python/20220314-163735/checkpoint-best-bleu/pytorch_model.bin"
     mapping_path = {}
     for split in splits:
         print ("Running pre_mapping script for " + split + " dataset")
@@ -74,3 +56,8 @@ if __name__ == "__main__":
 
 
 
+
+if __name__ == "__main__":
+    path_to_data = '/tcmldrive/project/resources/data_codesearch/CodeSearchNet/python/'
+    path_to_model = "/tcmldrive/project/results/python/20220314-163735/checkpoint-best-bleu/pytorch_model.bin"
+    main(path_to_data, path_to_model)
