@@ -11,7 +11,7 @@ The required packages for this project you can find in requiremnts.txt file.
 
 We used the clean CodeSearchNet that is provided in the official CodeBert repository. 
 You can download the data from this [website](https://drive.google.com/open?id=1rd2Tc6oUWBo7JouwexW3ksQ0PaOhUr6h).
-In addition we modified and used the code from the following [paper](https://arxiv.org/abs/2002.03043) 
+In addition we udapted  the code from the following [paper](https://arxiv.org/abs/2002.03043) 
 by Goutham Ramakrishnan and Jordan Henkel.
 
 the amount of examples for train,valid and test datasets in the original and augmented datasets.
