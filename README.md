@@ -19,10 +19,11 @@ the amount of examples for train,valid and test datasets in the original and aug
 | PL         | Training |  Dev   |  Test  |
 | :--------- | :------: | :----: | :----: |
 | Clean     | 251,820  | 13,914 | 14,918 |
-| Rename Parameters        |   |  |  |
-| Rename Local Variables         |   |   |   |
-| Rename Fields       |   |   |  |
-| Add Dead Code |   |   |   |
+| Add Dead Code |  171,471 | 9,507   |  9,985 |
+| Rename Local Variables         | 135,097  |  7,432 | 7,751  |
+| Rename Parameters        | 143,466  | 8,154 | 8,356 |
+| Rename Fields       |  74,043 |  4,024 |  4,466 |
+
 
 
 
@@ -102,9 +103,11 @@ py CodeSearchNet are shown in this Table:
 
 | Model       |   BLEU-4    |
 | ----------- | :-------: |
-| CodeBERT      |      |  
-| CodeBERT and Rename Parameters  |      |  
-| CodeBERT and Rename Local Variables     |     |     
-| CodeBERT and Rename Fields   |   |
-| CodeBERT and Add Dead Code   | |              
+| CodeBERT original     |  19.06    |  
+| CodeBERT restored     |   18.13   | 
+| CodeBERT and Add Dead Code   | 12.30 | 
+| CodeBERT and Rename Local Variables     |   19.16  |    
+| CodeBERT and Rename Parameters  |   19.18   |
+| CodeBERT and Rename Fields   | 19.01  |
+            
 
