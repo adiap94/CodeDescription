@@ -112,9 +112,14 @@ py CodeSearchNet are shown in this Table:
 | CodeBERT and Rename Local Variables     |   19.16  |    
 | CodeBERT and Rename Parameters  |   19.18   |
 | CodeBERT and Rename Fields   | 19.01  |
-            
+
+## Available trained models for download
+You can download the trained models from the following [drive](https://technionmail-my.sharepoint.com/:f:/g/personal/sadie941_campus_technion_ac_il/EtesnJJ-GB9CkqTIJPynoI4BuLDtnqbGHK7wR0V4u9rCjQ?e=Xd9Plw).
+Pay attention it is only authorized for Technion - Israel Institute of technology community.
+
+If you need an authorization, please contact us by email.  
 ## Authors
 
-Adi Apotheker Tovi, a MSc student for Biomedical Engineering ,The Technion, Israel
+Adi Apotheker Tovi, a MSc student for Biomedical Engineering ,The Technion, Israel , sadie941@campus.technion.ac.il 
 
-Yevgenia Shteynman, a MSc student for Biomedical Engineering ,The Technion, Israel
+Yevgenia Shteynman, a MSc student for Biomedical Engineering ,The Technion, Israel, jenny075@campus.technion.ac.il 
